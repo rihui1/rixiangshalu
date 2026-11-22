@@ -11,18 +11,23 @@ const app = express();
 app.use(express.json({ limit: '10mb' })); 
 app.use(express.static('public'));
 
+// 复制粘贴时容易带上空格或换行，这里统一去掉首尾空白
+const EMAIL_USER = String(process.env.EMAIL_USER || '').trim();
+const EMAIL_PASS = String(process.env.EMAIL_PASS || '').replace(/\s/g, '');
+
 const transporter = nodemailer.createTransport({
     host: 'smtp.163.com',
     port: 465,
     secure: true,
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+    auth: { user: EMAIL_USER, pass: EMAIL_PASS },
     connectionTimeout: 10000
 });
 
-if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+if (EMAIL_USER && EMAIL_PASS) {
+    console.log(`发件邮箱：${EMAIL_USER}（授权码 ${EMAIL_PASS.length} 位）`);
     transporter.verify()
         .then(() => console.log('SMTP 登录成功，验证码邮件可以正常发送'))
-        .catch((err) => console.error('SMTP 配置有问题，验证码将无法发送：', err.message));
+        .catch((err) => console.error('SMTP 配置有问题，验证码将无法发送：', err.code || '', err.message));
 } else {
     console.warn('未配置 EMAIL_USER / EMAIL_PASS，验证码邮件功能不可用');
 }
@@ -319,7 +324,7 @@ app.post('/api/send-code', async (req, res) => {
     const email = String((req.body && req.body.email) || '').trim().toLowerCase();
     if (!email) return res.status(400).json({ error: '请输入邮箱' });
     if (!isValidEmail(email)) return res.status(400).json({ error: '邮箱格式不正确' });
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    if (!EMAIL_USER || !EMAIL_PASS) {
         console.error('send-code 失败：.env 中缺少 EMAIL_USER 或 EMAIL_PASS');
         return res.status(500).json({ error: '服务器还没有配置发件邮箱，暂时无法发送验证码' });
     }
@@ -335,7 +340,7 @@ app.post('/api/send-code', async (req, res) => {
         db.prepare('INSERT OR REPLACE INTO email_codes (email, code, expires_at, sent_at) VALUES (?, ?, ?, ?)')
             .run(email, code, expiresAt, Date.now());
         await transporter.sendMail({
-            from: `"日向的网站" <${process.env.EMAIL_USER}>`, to: email, subject: '【日向的网站】验证码',
+            from: `"日向的网站" <${EMAIL_USER}>`, to: email, subject: '【日向的网站】验证码',
             html: `<p>您的验证码是：<strong>${code}</strong>，5 分钟内有效。</p><p>如果不是你本人操作，请忽略这封邮件。</p>`
         });
         res.json({ message: '发送成功' });
