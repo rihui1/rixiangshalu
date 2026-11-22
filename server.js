@@ -50,9 +50,11 @@ db.exec(`
 `);
 
 // 2. 为了防止旧数据库报错，尝试动态添加字段（如果已存在会报错，直接忽略）
-try { db.exec("ALTER TABLE users ADD COLUMN uid TEXT UNIQUE;"); } catch (e) {}
+// SQLite 不允许 ALTER TABLE 直接加 UNIQUE 列，只能先加普通列再建唯一索引
+try { db.exec("ALTER TABLE users ADD COLUMN uid TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE users ADD COLUMN avatar TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE users ADD COLUMN signature TEXT DEFAULT '这个人很懒，什么都没写';"); } catch (e) {}
+try { db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_uid ON users (uid);"); } catch (e) {}
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
