@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>更新日志 - 我的论坛</title>
+    <!-- 引入全局样式 -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* 专门为更新日志页面写的 GitHub 风格样式 */
+        .changelog-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border: 1px solid #e1e4e8;
+            text-align: left;
+        }
+        .changelog-container h1 {
+            font-size: 28px;
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+            color: #24292e;
+        }
+        .release {
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 1px dashed #e1e4e8;
+        }
+        .release:last-child {
+            border-bottom: none;
+        }
+        .release-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .release-header h2 {
+            margin: 0;
+            font-size: 20px;
+            color: #0366d6;
+        }
+        .release-date {
+            margin-left: 15px;
+            color: #6a737d;
+            font-size: 14px;
+        }
+        .tag-latest {
+            margin-left: 10px;
+            background-color: #2cbe4e;
+            color: white;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: bold;
+        }
+        .changelog-list {
+            margin: 0;
+            padding-left: 20px;
+            color: #24292e;
+            line-height: 1.8;
+        }
+        .changelog-list li {
+            margin-bottom: 8px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 4px;
+            margin-right: 8px;
+        }
+        .badge-new { background-color: #e6f4ea; color: #1e7e34; }
+        .badge-fix { background-color: #fff5b1; color: #b08800; }
+        
+        /* 返回按钮 */
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #0366d6;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .back-btn:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="changelog-container">
+        <a href="index.html" class="back-btn">← 返回登录</a>
+        <h1>更新日志</h1>
+
+        <!-- 版本 v1.1.0 -->
+        <div class="release">
+            <div class="release-header">
+                <h2>v1.1.0</h2>
+                <span class="tag-latest">Latest (最新)</span>
+                <span class="release-date">2026年11月5日</span>
+            </div>
+            <ul class="changelog-list">
+                <li><span class="badge badge-new">新增</span> 邮箱验证码注册与登录功能。</li>
+                <li><span class="badge badge-new">新增</span> 独立的注册页面，提升用户体验。</li>
+                <li><span class="badge badge-fix">修复</span> 解决了数据库缺少 email 字段导致的 500 错误。</li>
+            </ul>
+        </div>
+
+        <!-- 版本 v1.0.0 -->
+        <div class="release">
+            <div class="release-header">
+                <h2>v1.0.0</h2>
+                <span class="release-date">2026年11月1日</span>
+            </div>
+            <ul class="changelog-list">
+                <li><span class="badge badge-new">首发</span> 网站基础框架搭建（Node.js + Express + SQLite）。</li>
+                <li><span class="badge badge-new">首发</span> 实现了基础的用户名密码注册与登录。</li>
+                <li><span class="badge badge-new">首发</span> 实现了发帖和帖子列表展示功能。</li>
+            </ul>
+        </div>
+
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 智能助手</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* 聊天专用样式 */
+        .chat-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            height: 80vh; /* 占据屏幕高度的80% */
+        }
+        .chat-header {
+            padding: 15px 20px;
+            background: #007bff;
+            color: white;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-header a {
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .chat-history {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f5f7fa;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        /* 聊天气泡样式 */
+        .message {
+            max-width: 75%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            font-size: 15px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .message.user {
+            align-self: flex-end;
+            background: #007bff;
+            color: white;
+            border-bottom-right-radius: 2px;
+        }
+        .message.ai {
+            align-self: flex-start;
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-bottom-left-radius: 2px;
+        }
+        /* 输入区 */
+        .chat-input-area {
+            padding: 15px;
+            background: white;
+            border-radius: 0 0 12px 12px;
+            display: flex;
+            gap: 10px;
+            border-top: 1px solid #eee;
+        }
+        .chat-input-area input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+            margin: 0;
+        }
+        .chat-input-area button {
+            width: 80px;
+            border-radius: 20px;
+            margin: 0;
+        }
+    </style>
+</head>
+<body style="background-color: #e9ecef; padding: 10px;">
+
+    <div class="chat-container">
+        <div class="chat-header">
+            <span>🤖 AI 智能助手</span>
+            <a href="index.html">返回论坛</a>
+        </div>
+        
+        <div class="chat-history" id="chat-history">
+            <!-- 初始欢迎语 -->
+            <div class="message ai">你好！我是这个网站的 AI 助手，有什么我可以帮你的吗？</div>
+        </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="ai-input" placeholder="输入你想问的问题..." onkeypress="handleKeyPress(event)">
+            <button id="send-btn" onclick="sendToAI()">发送</button>
+        </div>
+    </div>
+
+    <script src="chat.js"></script>
+</body>
+</html>
