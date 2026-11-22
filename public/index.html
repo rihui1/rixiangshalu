@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>日向论坛</title>
-    <link rel="stylesheet" href="app.css?v=1.4.0">
+    <link rel="stylesheet" href="app.css?v=1.0.5">
 </head>
 <body>
     <div class="scrim" id="scrim" onclick="toggleSidebar()"></div>
@@ -115,7 +115,18 @@
                     <div class="panel">
                         <h3>更新日志</h3>
                         <article class="release">
-                            <h2>v1.4.0 <span class="badge badge-new">最新</span></h2>
+                            <h2>v1.0.5 <span class="badge badge-new">最新</span></h2>
+                            <p>2026年11月22日</p>
+                            <ul>
+                                <li><span class="badge badge-new">新增</span>独立超管后台 <code>/admin.html</code>：实时查看在线、用户、发帖与 AI 用量。</li>
+                                <li><span class="badge badge-new">新增</span>超管可单独给某个账号下发额外 AI 额度。</li>
+                                <li><span class="badge badge-new">新增</span>超管可封禁 / 解封 / 删除账号，隐藏 / 删除帖子。</li>
+                                <li><span class="badge badge-new">新增</span>超管登录失败限流、操作日志，令牌 2 小时自动过期。</li>
+                                <li><span class="badge badge-fix">调整</span>更新日志版本号统一从 v1.0.0 起顺序递增。</li>
+                            </ul>
+                        </article>
+                        <article class="release">
+                            <h2>v1.0.4</h2>
                             <p>2026年11月22日</p>
                             <ul>
                                 <li><span class="badge badge-fix">修复</span>未登录时右上角缺少头像圆圈。</li>
@@ -124,7 +135,7 @@
                             </ul>
                         </article>
                         <article class="release">
-                            <h2>v1.3.0</h2>
+                            <h2>v1.0.3</h2>
                             <p>2026年11月22日</p>
                             <ul>
                                 <li><span class="badge badge-new">新增</span>AI 聊天记录保存到服务器，换设备登录也能接着聊。</li>
@@ -134,7 +145,7 @@
                             </ul>
                         </article>
                         <article class="release">
-                            <h2>v1.2.0</h2>
+                            <h2>v1.0.2</h2>
                             <p>2026年11月22日</p>
                             <ul>
                                 <li><span class="badge badge-fix">修复</span>去掉更新日志里的「返回登录」，避免页面里再套一层网站。</li>
@@ -144,7 +155,7 @@
                             </ul>
                         </article>
                         <article class="release">
-                            <h2>v1.1.0</h2>
+                            <h2>v1.0.1</h2>
                             <p>2026年11月5日</p>
                             <ul>
                                 <li><span class="badge badge-new">新增</span>邮箱验证码注册与登录。</li>
@@ -285,6 +296,6 @@
             </div>
         </div>
     </div>
-    <script src="script.js?v=1.4.0"></script>
+    <script src="script.js?v=1.0.5"></script>
 </body>
 </html>

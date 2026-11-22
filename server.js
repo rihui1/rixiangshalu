@@ -9,6 +9,21 @@ const OpenAI = require('openai');
 const app = express();
 // 必须调大限制，否则 Base64 头像传不上去
 app.use(express.json({ limit: '10mb' })); 
+// 经过 Cloudflare 隧道，需要信任代理才能拿到真实 IP
+app.set('trust proxy', true);
+
+// 简单的请求计数，供超管后台展示实时信息
+let requestCount = 0;
+app.use((req, res, next) => { requestCount += 1; next(); });
+
+app.use(['/admin.html', '/api/admin'], (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    next();
+});
+
 app.use(express.static('public'));
 
 // 复制粘贴时容易带上空格或换行，这里统一去掉首尾空白
@@ -54,7 +69,8 @@ db.exec(`
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT,
         content TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        hidden INTEGER DEFAULT 0
     );
     CREATE TABLE IF NOT EXISTS email_codes (
         email TEXT PRIMARY KEY,
@@ -70,6 +86,14 @@ db.exec(`
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
     CREATE INDEX IF NOT EXISTS idx_chat_user ON chat_messages (user_id, id);
+    CREATE TABLE IF NOT EXISTS admin_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        admin TEXT,
+        action TEXT,
+        target TEXT,
+        detail TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
 `);
 
 // 2. 为了防止旧数据库报错，尝试动态添加字段（如果已存在会报错，直接忽略）
@@ -81,6 +105,13 @@ try { db.exec("ALTER TABLE users ADD COLUMN birthday TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE users ADD COLUMN created_at DATETIME;"); } catch (e) {}
 try { db.exec("ALTER TABLE email_codes ADD COLUMN sent_at INTEGER;"); } catch (e) {}
 try { db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_uid ON users (uid);"); } catch (e) {}
+// 超管后台需要的字段
+try { db.exec("ALTER TABLE users ADD COLUMN banned INTEGER DEFAULT 0;"); } catch (e) {}
+try { db.exec("ALTER TABLE users ADD COLUMN chat_bonus INTEGER DEFAULT 0;"); } catch (e) {}
+try { db.exec("ALTER TABLE users ADD COLUMN last_login_at TEXT;"); } catch (e) {}
+try { db.exec("ALTER TABLE users ADD COLUMN login_count INTEGER DEFAULT 0;"); } catch (e) {}
+try { db.exec("ALTER TABLE users ADD COLUMN last_active_at TEXT;"); } catch (e) {}
+try { db.exec("ALTER TABLE posts ADD COLUMN hidden INTEGER DEFAULT 0;"); } catch (e) {}
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -125,12 +156,23 @@ function readUser(req) {
     if (!raw) return { status: 401, error: '未登录' };
     try {
         const decoded = jwt.verify(raw, JWT_SECRET);
+        if (decoded.typ === 'admin') return { status: 401, error: '未登录' };
         const user = db.prepare('SELECT * FROM users WHERE id = ?').get(decoded.id);
         if (!user) return { status: 404, error: '用户不存在' };
+        if (user.banned) return { status: 403, error: '账号已被封禁，如有疑问请联系管理员' };
+        // 记录活跃时间，供超管后台统计在线人数
+        db.prepare("UPDATE users SET last_active_at = datetime('now', 'localtime') WHERE id = ?").run(user.id);
         return { user, decoded };
     } catch (err) {
         return { status: 401, error: '登录已过期' };
     }
+}
+
+// 记录登录成功的时间与次数
+function markLogin(userId) {
+    db.prepare(
+        "UPDATE users SET last_login_at = datetime('now', 'localtime'), last_active_at = datetime('now', 'localtime'), login_count = COALESCE(login_count, 0) + 1 WHERE id = ?"
+    ).run(userId);
 }
 
 function isValidEmail(email) {
@@ -145,9 +187,12 @@ function chatUsedToday(userId) {
     return row ? row.n : 0;
 }
 
-function chatQuota(userId) {
-    const used = chatUsedToday(userId);
-    return { used, limit: CHAT_DAILY_LIMIT, remaining: Math.max(0, CHAT_DAILY_LIMIT - used) };
+// 每位用户的每日额度 = 全局默认额度 + 超管单独下发的额外额度
+function chatQuota(user) {
+    const bonus = Math.max(0, Number(user && user.chat_bonus) || 0);
+    const limit = CHAT_DAILY_LIMIT + bonus;
+    const used = chatUsedToday(user.id);
+    return { used, limit, remaining: Math.max(0, limit - used), bonus, base: CHAT_DAILY_LIMIT };
 }
 // 注册接口
 app.post('/api/register', async (req, res) => {
@@ -191,7 +236,9 @@ app.post('/api/login', async (req, res) => {
     if (!user) return res.status(400).json({ error: '用户不存在' });
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) return res.status(400).json({ error: '密码错误' });
+    if (user.banned) return res.status(403).json({ error: '账号已被封禁，如有疑问请联系管理员' });
 
+    markLogin(user.id);
     const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET);
     res.json({ token, username: user.username, avatar: user.avatar });
 });
@@ -213,7 +260,7 @@ app.get('/api/user/profile', (req, res) => {
         created_at: user.created_at || '',
         stats: {
             posts: postCount,
-            chat: chatQuota(user.id)
+            chat: chatQuota(user)
         }
     });
 });
@@ -240,7 +287,9 @@ app.post('/api/login-email', (req, res) => {
     if (Date.now() > codeRecord.expires_at) return res.status(400).json({ error: '验证码已过期' });
     const user = db.prepare('SELECT * FROM users WHERE email = ?').get(normalized);
     if (!user) return res.status(400).json({ error: '该邮箱未注册' });
+    if (user.banned) return res.status(403).json({ error: '账号已被封禁，如有疑问请联系管理员' });
     db.prepare('DELETE FROM email_codes WHERE email = ?').run(normalized);
+    markLogin(user.id);
     const loginToken = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET);
     res.json({ token: loginToken, username: user.username, avatar: user.avatar });
 });
@@ -359,19 +408,16 @@ app.post('/api/send-code', async (req, res) => {
 });
 
 app.post('/api/posts', (req, res) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: '请先登录' });
-    const token = authHeader.split(' ')[1];
-    jwt.verify(token, JWT_SECRET, (err, decoded) => {
-        if (err) return res.status(403).json({ error: '登录已过期' });
-        const { content } = req.body;
-        db.prepare('INSERT INTO posts (username, content) VALUES (?, ?)').run(decoded.username, content);
-        res.json({ message: '发帖成功' });
-    });
+    const auth = readUser(req);
+    if (auth.error) return res.status(auth.status).json({ error: auth.error });
+    const content = String((req.body && req.body.content) || '').trim();
+    if (!content) return res.status(400).json({ error: '内容不能为空' });
+    db.prepare("INSERT INTO posts (username, content, created_at) VALUES (?, ?, datetime('now', 'localtime'))").run(auth.user.username, content);
+    res.json({ message: '发帖成功' });
 });
 
 app.get('/api/posts', (req, res) => {
-    const posts = db.prepare('SELECT * FROM posts ORDER BY created_at DESC').all();
+    const posts = db.prepare('SELECT * FROM posts WHERE COALESCE(hidden, 0) = 0 ORDER BY created_at DESC').all();
     res.json(posts);
 });
 
@@ -382,7 +428,7 @@ app.get('/api/chat/history', (req, res) => {
     const rows = db.prepare(
         'SELECT role, content, created_at FROM chat_messages WHERE user_id = ? ORDER BY id DESC LIMIT 100'
     ).all(auth.user.id).reverse();
-    res.json({ messages: rows, quota: chatQuota(auth.user.id) });
+    res.json({ messages: rows, quota: chatQuota(auth.user) });
 });
 
 // 清空当前用户的聊天记录
@@ -401,7 +447,7 @@ app.post('/api/chat', async (req, res) => {
     if (!message) return res.status(400).json({ error: '消息不能为空' });
     if (message.length > 2000) return res.status(400).json({ error: '消息太长了，请控制在 2000 字以内' });
 
-    const quota = chatQuota(auth.user.id);
+    const quota = chatQuota(auth.user);
     if (quota.remaining <= 0) {
         return res.status(429).json({
             error: `今天的 ${CHAT_DAILY_LIMIT} 条额度已经用完啦，明天再来吧`,
@@ -428,11 +474,202 @@ app.post('/api/chat', async (req, res) => {
         insert.run(auth.user.id, 'user', message);
         insert.run(auth.user.id, 'assistant', reply);
 
-        res.json({ reply, quota: chatQuota(auth.user.id) });
+        res.json({ reply, quota: chatQuota(auth.user) });
     } catch (error) {
         console.error('AI 调用失败：', error.message);
         res.status(502).json({ error: 'AI 暂时不可用，请稍后再试' });
     }
+});
+
+// ================= 超管后台 =================
+const ADMIN_USERNAME = String(process.env.ADMIN_USERNAME || '').trim();
+const ADMIN_PASSWORD_HASH = String(process.env.ADMIN_PASSWORD_HASH || '').trim();
+const ADMIN_TOKEN_TTL = '2h';
+// 登录失败限流：同一 IP 连续失败 5 次，锁定 10 分钟
+const adminLoginFails = new Map();
+
+function requireAdmin(req, res, next) {
+    const header = req.headers.authorization || '';
+    const raw = header.startsWith('Bearer ') ? header.slice(7) : '';
+    if (!raw) return res.status(401).json({ error: '请先登录超管后台' });
+    try {
+        const decoded = jwt.verify(raw, JWT_SECRET);
+        if (decoded.typ !== 'admin' || decoded.username !== ADMIN_USERNAME) {
+            return res.status(403).json({ error: '没有超管权限' });
+        }
+        req.admin = decoded;
+        next();
+    } catch (e) {
+        return res.status(401).json({ error: '登录已过期，请重新登录' });
+    }
+}
+
+function logAdmin(req, action, target, detail) {
+    db.prepare('INSERT INTO admin_logs (admin, action, target, detail) VALUES (?, ?, ?, ?)')
+        .run((req.admin && req.admin.username) || 'unknown', action, String(target || ''), String(detail || ''));
+}
+
+app.post('/api/admin/login', async (req, res) => {
+    if (!ADMIN_USERNAME || !ADMIN_PASSWORD_HASH) {
+        return res.status(503).json({ error: '服务器还没有配置超管账号（ADMIN_USERNAME / ADMIN_PASSWORD_HASH）' });
+    }
+    const ip = req.ip || 'unknown';
+    const rec = adminLoginFails.get(ip) || { count: 0, until: 0 };
+    if (rec.until > Date.now()) {
+        const mins = Math.ceil((rec.until - Date.now()) / 60000);
+        return res.status(429).json({ error: `尝试次数过多，请 ${mins} 分钟后再试` });
+    }
+
+    const username = String((req.body && req.body.username) || '').trim();
+    const password = String((req.body && req.body.password) || '');
+    let passOk = false;
+    try { passOk = await bcrypt.compare(password, ADMIN_PASSWORD_HASH); } catch (e) { passOk = false; }
+
+    if (username !== ADMIN_USERNAME || !passOk) {
+        rec.count += 1;
+        if (rec.count >= 5) { rec.count = 0; rec.until = Date.now() + 10 * 60 * 1000; }
+        adminLoginFails.set(ip, rec);
+        console.warn(`超管登录失败：ip=${ip} 账号=${username}`);
+        return res.status(401).json({ error: '账号或密码不正确' });
+    }
+
+    adminLoginFails.delete(ip);
+    db.prepare('INSERT INTO admin_logs (admin, action, target, detail) VALUES (?, ?, ?, ?)')
+        .run(username, 'login', ip, '超管登录成功');
+    const token = jwt.sign({ typ: 'admin', username: ADMIN_USERNAME }, JWT_SECRET, { expiresIn: ADMIN_TOKEN_TTL });
+    res.json({ token, username: ADMIN_USERNAME });
+});
+
+// 概览：用户量、在线、发帖、AI 用量、服务器实时状态
+app.get('/api/admin/overview', requireAdmin, (req, res) => {
+    const os = require('os');
+    const fs = require('fs');
+    const count = (sql) => db.prepare(sql).get().n;
+    const mem = process.memoryUsage();
+    let dbSize = 0;
+    try { dbSize = fs.statSync('./database.db').size; } catch (e) {}
+
+    res.json({
+        server_time: new Date().toLocaleString('zh-CN', { hour12: false }),
+        server: {
+            uptimeSec: Math.floor(process.uptime()),
+            requests: requestCount,
+            rssMB: +(mem.rss / 1048576).toFixed(1),
+            memUsedMB: Math.round((os.totalmem() - os.freemem()) / 1048576),
+            memTotalMB: Math.round(os.totalmem() / 1048576),
+            loadavg: Number(os.loadavg()[0]).toFixed(2),
+            node: process.version,
+            platform: os.platform() + ' ' + os.arch(),
+            dbSizeMB: +(dbSize / 1048576).toFixed(2)
+        },
+        users: {
+            total: count('SELECT COUNT(*) AS n FROM users'),
+            banned: count('SELECT COUNT(*) AS n FROM users WHERE COALESCE(banned, 0) = 1'),
+            todayNew: count("SELECT COUNT(*) AS n FROM users WHERE date(created_at) = date('now', 'localtime')"),
+            activeToday: count("SELECT COUNT(*) AS n FROM users WHERE date(last_active_at) = date('now', 'localtime')"),
+            online5m: count("SELECT COUNT(*) AS n FROM users WHERE last_active_at >= datetime('now', 'localtime', '-5 minutes')")
+        },
+        posts: {
+            total: count('SELECT COUNT(*) AS n FROM posts'),
+            hidden: count('SELECT COUNT(*) AS n FROM posts WHERE COALESCE(hidden, 0) = 1'),
+            today: count("SELECT COUNT(*) AS n FROM posts WHERE date(created_at) = date('now', 'localtime')")
+        },
+        chat: {
+            todayMessages: count("SELECT COUNT(*) AS n FROM chat_messages WHERE role = 'user' AND date(created_at, 'localtime') = date('now', 'localtime')"),
+            totalMessages: count('SELECT COUNT(*) AS n FROM chat_messages'),
+            defaultLimit: CHAT_DAILY_LIMIT
+        },
+        recentLogins: db.prepare(
+            'SELECT username, last_login_at FROM users WHERE last_login_at IS NOT NULL ORDER BY last_login_at DESC LIMIT 8'
+        ).all(),
+        logs: db.prepare('SELECT admin, action, target, detail, created_at FROM admin_logs ORDER BY id DESC LIMIT 12').all()
+    });
+});
+
+app.get('/api/admin/users', requireAdmin, (req, res) => {
+    const q = String(req.query.q || '').trim();
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const size = 20;
+    const like = '%' + q + '%';
+    const where = q ? 'WHERE username LIKE ? OR email LIKE ? OR COALESCE(uid, \'\') LIKE ?' : '';
+    const params = q ? [like, like, like] : [];
+
+    const total = db.prepare('SELECT COUNT(*) AS n FROM users ' + where).get(...params).n;
+    const users = db.prepare(
+        'SELECT id, uid, username, email, created_at, last_login_at, last_active_at, login_count, chat_bonus, banned FROM users ' +
+        where + ' ORDER BY id DESC LIMIT ? OFFSET ?'
+    ).all(...params, size, (page - 1) * size).map((u) => ({
+        ...u,
+        chatToday: chatUsedToday(u.id),
+        chatLimit: CHAT_DAILY_LIMIT + Math.max(0, Number(u.chat_bonus) || 0)
+    }));
+
+    res.json({ total, page, size, users });
+});
+
+// 给某个账号下发额外聊天额度
+app.post('/api/admin/users/quota', requireAdmin, (req, res) => {
+    const id = Number(req.body && req.body.id);
+    const bonus = Math.max(0, Math.min(100000, Math.floor(Number(req.body && req.body.bonus) || 0)));
+    const user = db.prepare('SELECT id, username FROM users WHERE id = ?').get(id);
+    if (!user) return res.status(404).json({ error: '用户不存在' });
+    db.prepare('UPDATE users SET chat_bonus = ? WHERE id = ?').run(bonus, id);
+    logAdmin(req, 'quota', user.username, '额外额度设为 ' + bonus);
+    res.json({ message: '已更新', bonus });
+});
+
+app.post('/api/admin/users/ban', requireAdmin, (req, res) => {
+    const id = Number(req.body && req.body.id);
+    const banned = req.body && req.body.banned ? 1 : 0;
+    const user = db.prepare('SELECT id, username FROM users WHERE id = ?').get(id);
+    if (!user) return res.status(404).json({ error: '用户不存在' });
+    db.prepare('UPDATE users SET banned = ? WHERE id = ?').run(banned, id);
+    logAdmin(req, banned ? 'ban' : 'unban', user.username, banned ? '封禁账号' : '解封账号');
+    res.json({ message: banned ? '已封禁' : '已解封', banned });
+});
+
+app.delete('/api/admin/users/:id', requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    const user = db.prepare('SELECT id, username FROM users WHERE id = ?').get(id);
+    if (!user) return res.status(404).json({ error: '用户不存在' });
+    db.prepare('DELETE FROM posts WHERE username = ?').run(user.username);
+    db.prepare('DELETE FROM chat_messages WHERE user_id = ?').run(user.id);
+    db.prepare('DELETE FROM users WHERE id = ?').run(user.id);
+    logAdmin(req, 'delete_user', user.username, '删除账号及其帖子、聊天记录');
+    res.json({ message: '已删除' });
+});
+
+app.get('/api/admin/posts', requireAdmin, (req, res) => {
+    const q = String(req.query.q || '').trim();
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const size = 20;
+    const like = '%' + q + '%';
+    const where = q ? 'WHERE content LIKE ? OR username LIKE ?' : '';
+    const params = q ? [like, like] : [];
+
+    const total = db.prepare('SELECT COUNT(*) AS n FROM posts ' + where).get(...params).n;
+    const posts = db.prepare('SELECT * FROM posts ' + where + ' ORDER BY id DESC LIMIT ? OFFSET ?')
+        .all(...params, size, (page - 1) * size);
+    res.json({ total, page, size, posts });
+});
+
+app.post('/api/admin/posts/hide', requireAdmin, (req, res) => {
+    const id = Number(req.body && req.body.id);
+    const hidden = req.body && req.body.hidden ? 1 : 0;
+    const post = db.prepare('SELECT id, username FROM posts WHERE id = ?').get(id);
+    if (!post) return res.status(404).json({ error: '帖子不存在' });
+    db.prepare('UPDATE posts SET hidden = ? WHERE id = ?').run(hidden, id);
+    logAdmin(req, hidden ? 'hide_post' : 'show_post', post.username, (hidden ? '隐藏帖子 #' : '恢复帖子 #') + id);
+    res.json({ message: hidden ? '已隐藏' : '已恢复', hidden });
+});
+
+app.delete('/api/admin/posts/:id', requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    const post = db.prepare('SELECT id, username FROM posts WHERE id = ?').get(id);
+    if (!post) return res.status(404).json({ error: '帖子不存在' });
+    db.prepare('DELETE FROM posts WHERE id = ?').run(id);
+    logAdmin(req, 'delete_post', post.username, '删除帖子 #' + id);
+    res.json({ message: '已删除' });
 });
 
 const port = process.env.PORT || 3000;

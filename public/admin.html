@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>超管后台 · 日向论坛</title>
+<style>
+    :root {
+        --bg: #0d1117;
+        --panel: #161b22;
+        --panel-2: #1c2330;
+        --line: #263044;
+        --text: #e6edf3;
+        --muted: #8b949e;
+        --blue: #2f81f7;
+        --green: #3fb950;
+        --red: #f85149;
+        --amber: #d29922;
+        --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        background: radial-gradient(1200px 600px at 15% -10%, #17233a 0%, var(--bg) 55%);
+        color: var(--text);
+        font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+        min-height: 100vh;
+    }
+    a { color: var(--blue); text-decoration: none; }
+    button { font-family: inherit; cursor: pointer; }
+    input { font-family: inherit; }
+
+    /* ---------- 登录 ---------- */
+    #login-layer {
+        position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+        background: rgba(6, 10, 18, .92); z-index: 50; padding: 20px;
+    }
+    .login-card {
+        width: 100%; max-width: 380px; background: var(--panel); border: 1px solid var(--line);
+        border-radius: 18px; padding: 30px 26px; box-shadow: 0 20px 60px rgba(0,0,0,.55);
+    }
+    .login-card h1 { margin: 0 0 6px; font-size: 20px; letter-spacing: .5px; }
+    .login-card p.sub { margin: 0 0 22px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .login-card input {
+        width: 100%; padding: 12px 14px; margin-bottom: 12px; border-radius: 10px;
+        border: 1px solid var(--line); background: #0b1220; color: var(--text); font-size: 14px; outline: none;
+    }
+    .login-card input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(47,129,247,.18); }
+    .login-card button {
+        width: 100%; padding: 12px; border: 0; border-radius: 10px; font-size: 15px; font-weight: 600;
+        color: #fff; background: linear-gradient(135deg, #2f81f7, #1f6feb);
+    }
+    .login-card button:disabled { opacity: .6; cursor: not-allowed; }
+    .login-msg { min-height: 18px; margin-top: 12px; font-size: 13px; color: var(--red); }
+    .login-hint { margin-top: 18px; font-size: 12px; color: var(--muted); line-height: 1.7; }
+
+    /* ---------- 主界面 ---------- */
+    .shell { max-width: 1240px; margin: 0 auto; padding: 26px 20px 60px; }
+    .topbar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; }
+    .topbar h1 { margin: 0; font-size: 22px; }
+    .pill {
+        font-size: 12px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line);
+        background: var(--panel-2); color: var(--muted);
+    }
+    .pill.live::before {
+        content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+        background: var(--green); margin-right: 6px; vertical-align: 1px;
+        animation: blink 1.6s infinite;
+    }
+    @keyframes blink { 0%,100% { opacity: 1 } 50% { opacity: .25 } }
+    .spacer { flex: 1; }
+    .ghost-btn {
+        padding: 8px 14px; border-radius: 9px; border: 1px solid var(--line);
+        background: var(--panel-2); color: var(--text); font-size: 13px;
+    }
+    .ghost-btn:hover { border-color: #3b4a63; }
+
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 22px; }
+    .stat {
+        background: linear-gradient(180deg, var(--panel) 0%, #141a24 100%);
+        border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px;
+    }
+    .stat span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+    .stat strong { font-size: 24px; font-variant-numeric: tabular-nums; }
+    .stat small { color: var(--muted); font-size: 11px; }
+
+    .tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+    .tab {
+        padding: 9px 16px; border-radius: 9px; border: 1px solid transparent;
+        background: transparent; color: var(--muted); font-size: 14px;
+    }
+    .tab.active { background: var(--panel-2); border-color: var(--line); color: var(--text); }
+
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+    .panel-head {
+        display: flex; gap: 10px; align-items: center; padding: 14px 16px;
+        border-bottom: 1px solid var(--line); flex-wrap: wrap;
+    }
+    .panel-head input[type="search"] {
+        flex: 1; min-width: 180px; padding: 9px 12px; border-radius: 9px;
+        border: 1px solid var(--line); background: #0b1220; color: var(--text); outline: none; font-size: 13px;
+    }
+    .panel-head input[type="search"]:focus { border-color: var(--blue); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid #1f2733; white-space: nowrap; }
+    th { color: var(--muted); font-weight: 500; background: #131923; }
+    tr:last-child td { border-bottom: 0; }
+    td.wrap { white-space: normal; max-width: 420px; color: #c9d4e0; line-height: 1.6; }
+    .tag { font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+    .tag.ok { color: var(--green); border-color: rgba(63,185,80,.4); }
+    .tag.bad { color: var(--red); border-color: rgba(248,81,73,.4); }
+    .tag.warn { color: var(--amber); border-color: rgba(210,153,34,.4); }
+
+    .qty { width: 76px; padding: 6px 8px; border-radius: 7px; border: 1px solid var(--line); background: #0b1220; color: var(--text); font-size: 12px; }
+    .mini {
+        padding: 5px 10px; font-size: 12px; border-radius: 7px; border: 1px solid var(--line);
+        background: #1b2230; color: var(--text); margin-right: 6px;
+    }
+    .mini:hover { border-color: #3b4a63; }
+    .mini.danger { color: var(--red); border-color: rgba(248,81,73,.35); }
+    .mini.danger:hover { background: rgba(248,81,73,.12); }
+    .mini.primary { color: #79b8ff; border-color: rgba(47,129,247,.4); }
+
+    .pager { display: flex; align-items: center; gap: 10px; padding: 12px 16px; color: var(--muted); font-size: 12px; }
+    .empty { padding: 30px; text-align: center; color: var(--muted); font-size: 13px; }
+
+    .log-list { padding: 6px 16px 16px; }
+    .log-item { display: flex; gap: 10px; padding: 9px 0; border-bottom: 1px dashed #212a37; font-size: 13px; color: #c3cedb; }
+    .log-item:last-child { border-bottom: 0; }
+    .log-item time { color: var(--muted); font-size: 12px; min-width: 140px; }
+
+    #toast {
+        position: fixed; left: 50%; bottom: 32px; transform: translate(-50%, 20px);
+        background: #1f6feb; color: #fff; padding: 11px 20px; border-radius: 10px;
+        font-size: 13px; opacity: 0; pointer-events: none; transition: .25s; z-index: 80;
+        box-shadow: 0 10px 30px rgba(0,0,0,.45);
+    }
+    #toast.show { opacity: 1; transform: translate(-50%, 0); }
+    #toast.err { background: #b3261e; }
+    .hidden { display: none !important; }
+    @media (max-width: 640px) {
+        .shell { padding: 18px 12px 50px; }
+        th, td { padding: 9px 10px; }
+    }
+</style>
+</head>
+<body>
+
+<div id="login-layer">
+    <form class="login-card" id="login-form">
+        <h1>超管后台</h1>
+        <p class="sub">仅限站长本人访问。连续 5 次密码错误将锁定该 IP 10 分钟。</p>
+        <input id="admin-user" type="text" placeholder="超管账号" autocomplete="username" required>
+        <input id="admin-pass" type="password" placeholder="超管密码" autocomplete="current-password" required>
+        <button type="submit" id="login-btn">登录</button>
+        <div class="login-msg" id="login-msg"></div>
+        <div class="login-hint">
+            登录状态只在当前标签页有效，关闭页面即退出；令牌 2 小时后自动失效。
+        </div>
+    </form>
+</div>
+
+<div class="shell hidden" id="shell">
+    <div class="topbar">
+        <h1>超管后台</h1>
+        <span class="pill live">实时监控中</span>
+        <span class="pill" id="server-time">--</span>
+        <div class="spacer"></div>
+        <button class="ghost-btn" onclick="refreshAll()">刷新</button>
+        <button class="ghost-btn" onclick="logout()">退出登录</button>
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="tabs">
+        <button class="tab active" data-tab="users" onclick="switchTab('users')">用户管理</button>
+        <button class="tab" data-tab="posts" onclick="switchTab('posts')">帖子管理</button>
+        <button class="tab" data-tab="logs" onclick="switchTab('logs')">登录与操作记录</button>
+    </div>
+
+    <section id="tab-users" class="panel">
+        <div class="panel-head">
+            <input type="search" id="user-q" placeholder="搜索用户名 / 邮箱 / UID，回车执行">
+            <button class="mini primary" onclick="searchUsers()">搜索</button>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>UID</th><th>用户名</th><th>邮箱</th><th>注册时间</th>
+                        <th>最后登录</th><th>登录次数</th><th>今日 AI</th><th>额外额度</th><th>状态</th><th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="user-body"></tbody>
+            </table>
+        </div>
+        <div class="pager">
+            <button class="mini" onclick="changePage('users', -1)">上一页</button>
+            <span id="user-page">第 1 页</span>
+            <button class="mini" onclick="changePage('users', 1)">下一页</button>
+        </div>
+    </section>
+
+    <section id="tab-posts" class="panel hidden">
+        <div class="panel-head">
+            <input type="search" id="post-q" placeholder="搜索帖子内容 / 作者，回车执行">
+            <button class="mini primary" onclick="searchPosts()">搜索</button>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>ID</th><th>作者</th><th>内容</th><th>发布时间</th><th>状态</th><th>操作</th></tr>
+                </thead>
+                <tbody id="post-body"></tbody>
+            </table>
+        </div>
+        <div class="pager">
+            <button class="mini" onclick="changePage('posts', -1)">上一页</button>
+            <span id="post-page">第 1 页</span>
+            <button class="mini" onclick="changePage('posts', 1)">下一页</button>
+        </div>
+    </section>
+
+    <section id="tab-logs" class="panel hidden">
+        <div class="panel-head"><strong style="font-size:14px">最近登录</strong></div>
+        <div class="log-list" id="recent-logins"></div>
+        <div class="panel-head"><strong style="font-size:14px">超管操作日志</strong></div>
+        <div class="log-list" id="admin-logs"></div>
+    </section>
+</div>
+
+<div id="toast"></div>
+
+<script>
+    let adminToken = sessionStorage.getItem('adminToken') || '';
+    const state = { tab: 'users', userPage: 1, postPage: 1, userQ: '', postQ: '' };
+
+    function esc(str) {
+        return String(str == null ? '' : str).replace(/[&<>"']/g, (c) => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+    }
+
+    function toast(msg, isErr) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.toggle('err', !!isErr);
+        el.classList.add('show');
+        clearTimeout(el._t);
+        el._t = setTimeout(() => el.classList.remove('show'), 2200);
+    }
+
+    async function api(path, options) {
+        const opt = options || {};
+        const headers = Object.assign({}, opt.headers || {});
+        if (adminToken) headers.Authorization = 'Bearer ' + adminToken;
+        if (opt.body) headers['Content-Type'] = 'application/json';
+        const res = await fetch(path, Object.assign({}, opt, { headers }));
+        if (res.status === 401 || res.status === 403) {
+            adminToken = '';
+            sessionStorage.removeItem('adminToken');
+            showLogin('登录状态已失效，请重新登录');
+            throw new Error('unauthorized');
+        }
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || ('请求失败 ' + res.status));
+        return data;
+    }
+
+    function showLogin(msg) {
+        document.getElementById('login-layer').classList.remove('hidden');
+        document.getElementById('shell').classList.add('hidden');
+        document.getElementById('login-msg').textContent = msg || '';
+        if (timer) clearInterval(timer);
+    }
+
+    function showShell() {
+        document.getElementById('login-layer').classList.add('hidden');
+        document.getElementById('shell').classList.remove('hidden');
+    }
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('login-btn');
+        const msg = document.getElementById('login-msg');
+        btn.disabled = true;
+        msg.textContent = '';
+        try {
+            const data = await api('/api/admin/login', {
+                method: 'POST',
+                body: JSON.stringify({
+                    username: document.getElementById('admin-user').value.trim(),
+                    password: document.getElementById('admin-pass').value
+                })
+            });
+            adminToken = data.token;
+            sessionStorage.setItem('adminToken', adminToken);
+            document.getElementById('admin-pass').value = '';
+            showShell();
+            refreshAll();
+            startTimer();
+        } catch (err) {
+            msg.textContent = err.message === 'unauthorized' ? '登录失败' : err.message;
+        } finally {
+            btn.disabled = false;
+        }
+    });
+
+    function logout() {
+        adminToken = '';
+        sessionStorage.removeItem('adminToken');
+        showLogin('已退出登录');
+    }
+
+    let timer = null;
+    function startTimer() {
+        if (timer) clearInterval(timer);
+        timer = setInterval(() => { loadOverview().catch(() => {}); }, 5000);
+    }
+
+    async function loadOverview() {
+        const d = await api('/api/admin/overview');
+        document.getElementById('server-time').textContent = d.server_time;
+        const s = d.server, u = d.users, p = d.posts, c = d.chat;
+        const mins = Math.floor(s.uptimeSec / 60);
+        const uptime = mins < 60 ? mins + ' 分钟' : Math.floor(mins / 60) + ' 小时 ' + (mins % 60) + ' 分';
+        const cards = [
+            ['用户总数', u.total, '封禁 ' + u.banned + ' 个'],
+            ['今日新增用户', u.todayNew, ''],
+            ['今日活跃用户', u.activeToday, '近 5 分钟在线 ' + u.online5m],
+            ['帖子总数', p.total, '今日 ' + p.today + ' 条 · 隐藏 ' + p.hidden],
+            ['今日 AI 消息', c.todayMessages, '默认额度 ' + c.defaultLimit + ' 条/人'],
+            ['累计 AI 消息', c.totalMessages, ''],
+            ['运行时长', uptime, s.node + ' · ' + s.platform],
+            ['内存占用', s.rssMB + ' MB', '系统 ' + s.memUsedMB + '/' + s.memTotalMB + ' MB'],
+            ['请求总数', s.requests, '负载 ' + s.loadavg],
+            ['数据库大小', s.dbSizeMB + ' MB', '累计处理请求']
+        ];
+        document.getElementById('stats').innerHTML = cards.map((item) =>
+            '<div class="stat"><span>' + esc(item[0]) + '</span><strong>' + esc(item[1]) + '</strong><small>' + esc(item[2]) + '</small></div>'
+        ).join('');
+
+        document.getElementById('recent-logins').innerHTML = (d.recentLogins || []).length
+            ? d.recentLogins.map((r) => '<div class="log-item"><time>' + esc(r.last_login_at) + '</time><span>' + esc(r.username) + ' 登录</span></div>').join('')
+            : '<div class="empty">暂无记录</div>';
+
+        document.getElementById('admin-logs').innerHTML = (d.logs || []).length
+            ? d.logs.map((r) => '<div class="log-item"><time>' + esc(r.created_at) + '</time><span>' + esc(r.admin) + ' · ' + esc(r.action) + ' · ' + esc(r.target) + ' ' + esc(r.detail) + '</span></div>').join('')
+            : '<div class="empty">暂无操作</div>';
+    }
+
+    async function loadUsers() {
+        const q = encodeURIComponent(state.userQ);
+        const d = await api('/api/admin/users?page=' + state.userPage + '&q=' + q);
+        const body = document.getElementById('user-body');
+        if (!d.users.length) {
+            body.innerHTML = '<tr><td colspan="10"><div class="empty">没有匹配的用户</div></td></tr>';
+        } else {
+            body.innerHTML = d.users.map((u) => {
+                const banned = Number(u.banned) === 1;
+                return '<tr>' +
+                    '<td>' + esc(u.uid || '-') + '</td>' +
+                    '<td>' + esc(u.username) + '</td>' +
+                    '<td>' + esc(u.email || '-') + '</td>' +
+                    '<td>' + esc(u.created_at || '-') + '</td>' +
+                    '<td>' + esc(u.last_login_at || '从未登录') + '</td>' +
+                    '<td>' + esc(u.login_count || 0) + '</td>' +
+                    '<td>' + esc(u.chatToday) + ' / ' + esc(u.chatLimit) + '</td>' +
+                    '<td><input class="qty" type="number" min="0" max="100000" value="' + esc(u.chat_bonus || 0) + '" id="bonus-' + u.id + '">' +
+                    '<button class="mini primary" onclick="saveQuota(' + u.id + ')">保存</button></td>' +
+                    '<td>' + (banned ? '<span class="tag bad">已封禁</span>' : '<span class="tag ok">正常</span>') + '</td>' +
+                    '<td>' +
+                    '<button class="mini" onclick="toggleBan(' + u.id + ',' + (banned ? 0 : 1) + ',\'' + esc(u.username) + '\')">' + (banned ? '解封' : '封禁') + '</button>' +
+                    '<button class="mini danger" onclick="removeUser(' + u.id + ',\'' + esc(u.username) + '\')">删除</button>' +
+                    '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+        document.getElementById('user-page').textContent = '第 ' + d.page + ' 页 · 共 ' + d.total + ' 人';
+    }
+
+    async function loadPosts() {
+        const q = encodeURIComponent(state.postQ);
+        const d = await api('/api/admin/posts?page=' + state.postPage + '&q=' + q);
+        const body = document.getElementById('post-body');
+        if (!d.posts.length) {
+            body.innerHTML = '<tr><td colspan="6"><div class="empty">没有匹配的帖子</div></td></tr>';
+        } else {
+            body.innerHTML = d.posts.map((p) => {
+                const hidden = Number(p.hidden) === 1;
+                return '<tr>' +
+                    '<td>' + p.id + '</td>' +
+                    '<td>' + esc(p.username) + '</td>' +
+                    '<td class="wrap">' + esc(p.content) + '</td>' +
+                    '<td>' + esc(p.created_at) + '</td>' +
+                    '<td>' + (hidden ? '<span class="tag warn">已隐藏</span>' : '<span class="tag ok">正常</span>') + '</td>' +
+                    '<td>' +
+                    '<button class="mini" onclick="toggleHide(' + p.id + ',' + (hidden ? 0 : 1) + ')">' + (hidden ? '恢复' : '隐藏') + '</button>' +
+                    '<button class="mini danger" onclick="removePost(' + p.id + ')">删除</button>' +
+                    '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+        document.getElementById('post-page').textContent = '第 ' + d.page + ' 页 · 共 ' + d.total + ' 条';
+    }
+
+    async function saveQuota(id) {
+        const bonus = Number(document.getElementById('bonus-' + id).value) || 0;
+        try {
+            await api('/api/admin/users/quota', { method: 'POST', body: JSON.stringify({ id, bonus }) });
+            toast('额度已更新为每日 ' + bonus + ' 条额外额度');
+            loadUsers().catch(() => {});
+        } catch (e) { if (e.message !== 'unauthorized') toast(e.message, true); }
+    }
+
+    async function toggleBan(id, banned, name) {
+        if (banned && !confirm('确定封禁「' + name + '」？封禁后该账号无法登录和发帖。')) return;
+        try {
+            await api('/api/admin/users/ban', { method: 'POST', body: JSON.stringify({ id, banned }) });
+            toast(banned ? '已封禁 ' + name : '已解封 ' + name);
+            loadUsers().catch(() => {});
+            loadOverview().catch(() => {});
+        } catch (e) { if (e.message !== 'unauthorized') toast(e.message, true); }
+    }
+
+    async function removeUser(id, name) {
+        if (!confirm('确定永久删除「' + name + '」？该用户的帖子和聊天记录会一起删除，不可恢复。')) return;
+        try {
+            await api('/api/admin/users/' + id, { method: 'DELETE' });
+            toast('已删除 ' + name);
+            loadUsers().catch(() => {});
+            loadOverview().catch(() => {});
+        } catch (e) { if (e.message !== 'unauthorized') toast(e.message, true); }
+    }
+
+    async function toggleHide(id, hidden) {
+        try {
+            await api('/api/admin/posts/hide', { method: 'POST', body: JSON.stringify({ id, hidden }) });
+            toast(hidden ? '帖子已隐藏' : '帖子已恢复');
+            loadPosts().catch(() => {});
+            loadOverview().catch(() => {});
+        } catch (e) { if (e.message !== 'unauthorized') toast(e.message, true); }
+    }
+
+    async function removePost(id) {
+        if (!confirm('确定删除帖子 #' + id + '？不可恢复。')) return;
+        try {
+            await api('/api/admin/posts/' + id, { method: 'DELETE' });
+            toast('已删除帖子 #' + id);
+            loadPosts().catch(() => {});
+            loadOverview().catch(() => {});
+        } catch (e) { if (e.message !== 'unauthorized') toast(e.message, true); }
+    }
+
+    function switchTab(tab) {
+        state.tab = tab;
+        document.querySelectorAll('.tab').forEach((el) => el.classList.toggle('active', el.dataset.tab === tab));
+        document.getElementById('tab-users').classList.toggle('hidden', tab !== 'users');
+        document.getElementById('tab-posts').classList.toggle('hidden', tab !== 'posts');
+        document.getElementById('tab-logs').classList.toggle('hidden', tab !== 'logs');
+        if (tab === 'users') loadUsers().catch(() => {});
+        if (tab === 'posts') loadPosts().catch(() => {});
+    }
+
+    function searchUsers() {
+        state.userQ = document.getElementById('user-q').value.trim();
+        state.userPage = 1;
+        loadUsers().catch((e) => toast(e.message, true));
+    }
+
+    function searchPosts() {
+        state.postQ = document.getElementById('post-q').value.trim();
+        state.postPage = 1;
+        loadPosts().catch((e) => toast(e.message, true));
+    }
+
+    function changePage(which, delta) {
+        if (which === 'users') {
+            state.userPage = Math.max(1, state.userPage + delta);
+            loadUsers().catch((e) => toast(e.message, true));
+        } else {
+            state.postPage = Math.max(1, state.postPage + delta);
+            loadPosts().catch((e) => toast(e.message, true));
+        }
+    }
+
+    document.getElementById('user-q').addEventListener('keydown', (e) => { if (e.key === 'Enter') searchUsers(); });
+    document.getElementById('post-q').addEventListener('keydown', (e) => { if (e.key === 'Enter') searchPosts(); });
+
+    function refreshAll() {
+        loadOverview().catch((e) => { if (e.message !== 'unauthorized') toast(e.message, true); });
+        if (state.tab === 'users') loadUsers().catch(() => {});
+        if (state.tab === 'posts') loadPosts().catch(() => {});
+    }
+
+    // 带着有效令牌进入时直接展示面板
+    if (adminToken) {
+        showShell();
+        refreshAll();
+        startTimer();
+    }
+</script>
+</body>
+</html>
