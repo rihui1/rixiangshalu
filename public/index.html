@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>日向论坛</title>
-    <link rel="stylesheet" href="app.css">
+    <link rel="stylesheet" href="app.css?v=1.4.0">
 </head>
 <body>
     <div class="scrim" id="scrim" onclick="toggleSidebar()"></div>
@@ -115,7 +115,16 @@
                     <div class="panel">
                         <h3>更新日志</h3>
                         <article class="release">
-                            <h2>v1.3.0 <span class="badge badge-new">最新</span></h2>
+                            <h2>v1.4.0 <span class="badge badge-new">最新</span></h2>
+                            <p>2026年11月22日</p>
+                            <ul>
+                                <li><span class="badge badge-fix">修复</span>未登录时右上角缺少头像圆圈。</li>
+                                <li><span class="badge badge-fix">修复</span>验证码发送失败时提示更明确，并补充服务端日志。</li>
+                                <li><span class="badge badge-fix">修复</span>静态资源加版本号，避免浏览器/CDN 缓存旧脚本导致按钮失效。</li>
+                            </ul>
+                        </article>
+                        <article class="release">
+                            <h2>v1.3.0</h2>
                             <p>2026年11月22日</p>
                             <ul>
                                 <li><span class="badge badge-new">新增</span>AI 聊天记录保存到服务器，换设备登录也能接着聊。</li>
@@ -276,6 +285,6 @@
             </div>
         </div>
     </div>
-    <script src="script.js"></script>
+    <script src="script.js?v=1.4.0"></script>
 </body>
 </html>

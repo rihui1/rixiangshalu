@@ -67,7 +67,12 @@ function initUserState() {
     if (tip) tip.hidden = Boolean(token && currentUser);
     document.getElementById('greet').textContent = greeting();
     if (!(token && currentUser)) {
-        area.innerHTML = '<button type="button" class="text-btn" onclick="openView(\'view-profile\')">登录</button>';
+        area.innerHTML =
+            '<span class="user-name guest-name">未登录</span>' +
+            '<button type="button" class="avatar" title="登录 / 注册" onclick="openView(\'view-profile\')">' +
+            '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z"/></svg>' +
+            '</button>' +
+            '<button type="button" class="text-btn" onclick="openView(\'view-profile\')">登录</button>';
         return;
     }
     const savedAvatar = localStorage.getItem('user_avatar') || '';

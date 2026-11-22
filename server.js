@@ -319,6 +319,10 @@ app.post('/api/send-code', async (req, res) => {
     const email = String((req.body && req.body.email) || '').trim().toLowerCase();
     if (!email) return res.status(400).json({ error: '请输入邮箱' });
     if (!isValidEmail(email)) return res.status(400).json({ error: '邮箱格式不正确' });
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        console.error('send-code 失败：.env 中缺少 EMAIL_USER 或 EMAIL_PASS');
+        return res.status(500).json({ error: '服务器还没有配置发件邮箱，暂时无法发送验证码' });
+    }
 
     const existing = db.prepare('SELECT sent_at FROM email_codes WHERE email = ?').get(email);
     if (existing && existing.sent_at && Date.now() - existing.sent_at < 60 * 1000) {
@@ -336,8 +340,16 @@ app.post('/api/send-code', async (req, res) => {
         });
         res.json({ message: '发送成功' });
     } catch (error) {
-        console.error('验证码邮件发送失败：', error.message);
-        res.status(500).json({ error: '邮件发送失败，请确认邮箱地址或稍后再试' });
+        console.error('验证码邮件发送失败：', error.code || '', error.message);
+        let hint = '邮件发送失败，请稍后再试';
+        if (error.code === 'EAUTH' || /535|authentication/i.test(error.message)) {
+            hint = '发件邮箱授权码不正确，请联系管理员检查邮箱配置';
+        } else if (error.code === 'ECONNECTION' || error.code === 'ETIMEDOUT') {
+            hint = '服务器连接邮箱服务超时，请稍后再试';
+        } else if (error.code === 'EENVELOPE') {
+            hint = '收件邮箱地址不可用，请检查是否填写正确';
+        }
+        res.status(500).json({ error: hint });
     }
 });
 
