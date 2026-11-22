@@ -68,7 +68,34 @@ function generateUID() {
     }
     return uid;
 }
+function ensureUid(user) {
+    if (user.uid) return user.uid;
+    const uid = generateUID();
+    db.prepare('UPDATE users SET uid = ? WHERE id = ?').run(uid, user.id);
+    user.uid = uid;
+    return uid;
+}
 
+function backfillUids() {
+    const rows = db.prepare("SELECT id FROM users WHERE uid IS NULL OR uid = ''").all();
+    const update = db.prepare('UPDATE users SET uid = ? WHERE id = ?');
+    rows.forEach((row) => update.run(generateUID(), row.id));
+}
+backfillUids();
+
+function readUser(req) {
+    const header = req.headers.authorization || '';
+    const raw = header.startsWith('Bearer ') ? header.slice(7) : '';
+    if (!raw) return { status: 401, error: '未登录' };
+    try {
+        const decoded = jwt.verify(raw, JWT_SECRET);
+        const user = db.prepare('SELECT * FROM users WHERE id = ?').get(decoded.id);
+        if (!user) return { status: 404, error: '用户不存在' };
+        return { user, decoded };
+    } catch (err) {
+        return { status: 401, error: '登录已过期' };
+    }
+}
 // 注册接口
 app.post('/api/register', async (req, res) => {
     const { username, password, email, code } = req.body;
@@ -110,27 +137,42 @@ app.post('/api/login', async (req, res) => {
 
 // ========== 用户中心接口 (重点修复) ==========
 
-// 获取用户信息
 app.get('/api/user/profile', (req, res) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: '未登录' });
-    
-    const token = authHeader.split(' ')[1];
-    jwt.verify(token, JWT_SECRET, (err, decoded) => {
-        if (err) return res.status(401).json({ error: '登录已过期' });
-        
-        const user = db.prepare('SELECT * FROM users WHERE id = ?').get(decoded.id);
-        if (!user) return res.status(404).json({ error: '用户不存在' });
-        
-        res.json({ 
-            uid: user.uid || '未分配', 
-            username: user.username, 
-            signature: user.signature || '这个人很懒，什么都没写',
-            avatar: user.avatar 
-        });
+    const auth = readUser(req);
+    if (auth.error) return res.status(auth.status).json({ error: auth.error });
+    const user = auth.user;
+    res.json({
+        uid: ensureUid(user),
+        username: user.username,
+        signature: user.signature || '这个人很懒，什么都没写',
+        avatar: user.avatar
     });
 });
 
+app.post('/api/user/delete', (req, res) => {
+    const auth = readUser(req);
+    if (auth.error) return res.status(auth.status).json({ error: auth.error });
+    const confirmName = (req.body && req.body.confirm) || '';
+    if (confirmName !== auth.user.username) {
+        return res.status(400).json({ error: '请输入正确的用户名以确认注销' });
+    }
+    db.prepare('DELETE FROM posts WHERE username = ?').run(auth.user.username);
+    db.prepare('DELETE FROM users WHERE id = ?').run(auth.user.id);
+    res.json({ message: '账号已注销' });
+});
+
+app.post('/api/login-email', (req, res) => {
+    const { email, code } = req.body || {};
+    if (!email || !code) return res.status(400).json({ error: '邮箱和验证码不能为空' });
+    const codeRecord = db.prepare('SELECT * FROM email_codes WHERE email = ?').get(email);
+    if (!codeRecord || codeRecord.code !== String(code).trim()) return res.status(400).json({ error: '验证码错误' });
+    if (Date.now() > codeRecord.expires_at) return res.status(400).json({ error: '验证码已过期' });
+    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    if (!user) return res.status(400).json({ error: '该邮箱未注册' });
+    db.prepare('DELETE FROM email_codes WHERE email = ?').run(email);
+    const loginToken = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET);
+    res.json({ token: loginToken, username: user.username, avatar: user.avatar });
+});
 // 更新用户信息
 app.post('/api/user/update', (req, res) => {
     const authHeader = req.headers.authorization;
