@@ -91,8 +91,12 @@
 
                 <section id="view-ai" class="view-section">
                     <div class="panel chat">
+                        <div class="chat-head">
+                            <span class="quota-pill" id="chat-quota">登录后可保存聊天记录</span>
+                            <button type="button" class="ghost small" onclick="clearChatHistory()">清空记录</button>
+                        </div>
                         <div class="chat-log" id="chat-history">
-                            <div class="bubble ai">你好，我是SILICONFLOW_API_KEY向的助手。想问什么，直接打在下面。</div>
+                            <div class="bubble ai">你好，我是日向的 AI 助手。登录后聊天记录会保存在服务器，下次登录可以接着聊。</div>
                         </div>
                         <div class="chat-bar">
                             <input id="ai-input" type="text" placeholder="输入问题，回车发送" onkeypress="handleKeyPress(event)">
@@ -111,7 +115,17 @@
                     <div class="panel">
                         <h3>更新日志</h3>
                         <article class="release">
-                            <h2>v1.2.0 <span class="badge badge-new">最新</span></h2>
+                            <h2>v1.3.0 <span class="badge badge-new">最新</span></h2>
+                            <p>2026年11月22日</p>
+                            <ul>
+                                <li><span class="badge badge-new">新增</span>AI 聊天记录保存到服务器，换设备登录也能接着聊。</li>
+                                <li><span class="badge badge-new">新增</span>每位用户每天 50 条 AI 额度，用完次日 0 点恢复。</li>
+                                <li><span class="badge badge-new">新增</span>用户中心重做：生日、邮箱换绑、修改密码、用量统计。</li>
+                                <li><span class="badge badge-fix">修复</span>验证码发送失败时给出具体提示，并限制发送频率。</li>
+                            </ul>
+                        </article>
+                        <article class="release">
+                            <h2>v1.2.0</h2>
                             <p>2026年11月22日</p>
                             <ul>
                                 <li><span class="badge badge-fix">修复</span>去掉更新日志里的「返回登录」，避免页面里再套一层网站。</li>
@@ -142,7 +156,7 @@
                 </section>
 
                 <section id="view-profile" class="view-section">
-                    <div id="auth-panel" class="panel">
+                    <div id="auth-panel" class="panel auth-panel">
                         <div class="tabs">
                             <button type="button" class="auth-tab active" data-tab="password" onclick="showAuthTab('password')">密码登录</button>
                             <button type="button" class="auth-tab" data-tab="email" onclick="showAuthTab('email')">验证码登录</button>
@@ -163,7 +177,7 @@
                         </div>
                         <div class="auth-form" data-form="register" hidden>
                             <input id="reg-username" type="text" placeholder="用户名" autocomplete="username">
-                            <input id="reg-password" type="password" placeholder="密码" autocomplete="new-password">
+                            <input id="reg-password" type="password" placeholder="密码（至少 6 位）" autocomplete="new-password">
                             <input id="reg-email" type="email" placeholder="邮箱">
                             <div class="row">
                                 <input id="verify-code" type="text" placeholder="6位验证码">
@@ -174,28 +188,70 @@
                         <p class="hint" id="auth-msg"></p>
                     </div>
 
-                    <div id="editor-panel" class="panel" hidden>
-                        <div class="profile-layout">
-                            <div>
-                                <div class="avatar-lg" id="avatar-click-area" onclick="document.getElementById('avatar-input').click()">
-                                    <img id="avatar-img" alt="">
-                                    <span id="avatar-text">点击上传</span>
-                                </div>
-                                <input id="avatar-input" type="file" accept="image/*" hidden onchange="pickAvatar(event)">
-                                <p class="empty" style="text-align:center;">保存前会裁成中间的正方形</p>
+                    <div id="editor-panel" hidden>
+                        <div class="profile-hero">
+                            <div class="avatar-lg" id="avatar-click-area" onclick="document.getElementById('avatar-input').click()">
+                                <img id="avatar-img" alt="">
+                                <span id="avatar-text">点击上传</span>
                             </div>
-                            <div class="stack">
-                                <div class="uid-row"><span>用户名</span><strong id="profile-username">加载中…</strong></div>
-                                <div class="uid-row"><span>UID</span><strong id="profile-uid">加载中…</strong></div>
+                            <input id="avatar-input" type="file" accept="image/*" hidden onchange="pickAvatar(event)">
+                            <div class="profile-head">
+                                <h2 id="profile-username">加载中…</h2>
+                                <p class="profile-meta">UID <strong id="profile-uid">—</strong><span class="dot">·</span>加入于 <span id="profile-joined">—</span></p>
+                                <p class="profile-meta">绑定邮箱：<strong id="profile-email">未绑定</strong></p>
+                            </div>
+                            <div class="profile-stats">
+                                <div><strong id="stat-posts">0</strong><span>发帖</span></div>
+                                <div><strong id="stat-chat">0</strong><span>今日 AI</span></div>
+                            </div>
+                        </div>
+
+                        <div class="profile-grid">
+                            <div class="panel">
+                                <h3>个人资料</h3>
                                 <label class="field">个性签名
-                                    <textarea id="profile-signature" rows="4" placeholder="介绍一下自己吧..."></textarea>
+                                    <textarea id="profile-signature" rows="3" placeholder="介绍一下自己吧..."></textarea>
                                 </label>
-                                <p><button type="button" class="primary" onclick="saveProfile()">保存修改</button></p>
-                                <div class="danger-zone">
-                                    <h3>注销账号</h3>
-                                    <p class="empty">注销后账号和你发过的帖子会删除，不能恢复。请输入用户名确认。</p>
+                                <label class="field">生日
+                                    <input type="date" id="profile-birthday">
+                                </label>
+                                <p class="empty">头像点左上角圆形区域上传，会自动裁成正方形。</p>
+                                <p><button type="button" class="primary" onclick="saveProfile()">保存资料</button></p>
+                            </div>
+
+                            <div class="panel">
+                                <h3>今日 AI 额度</h3>
+                                <p class="quota-number"><strong id="chat-used">0</strong> / <span id="chat-limit">50</span> 条</p>
+                                <div class="quota-bar"><i id="quota-fill"></i></div>
+                                <p class="empty">每天 0 点重置，聊天记录会自动保存。</p>
+                            </div>
+
+                            <div class="panel">
+                                <h3>更换绑定邮箱</h3>
+                                <p class="empty">验证码会发送到新邮箱，收不到就翻一下垃圾箱。</p>
+                                <div class="row">
+                                    <input id="bind-email" type="email" placeholder="新邮箱">
+                                    <button type="button" class="ghost" id="bind-code-btn" onclick="sendBindCode()">获取验证码</button>
+                                </div>
+                                <div class="row">
+                                    <input id="bind-code" type="text" placeholder="6 位验证码">
+                                    <button type="button" class="primary" onclick="bindEmail()">绑定</button>
+                                </div>
+                            </div>
+
+                            <div class="panel">
+                                <h3>修改密码</h3>
+                                <input id="old-password" type="password" placeholder="当前密码">
+                                <input id="new-password" type="password" placeholder="新密码（至少 6 位）">
+                                <p><button type="button" class="primary" onclick="changePassword()">修改密码</button></p>
+                            </div>
+
+                            <div class="panel danger-zone">
+                                <h3>注销账号</h3>
+                                <p class="empty">注销后账号、帖子和聊天记录都会删除，不能恢复。请输入用户名确认。</p>
+                                <div class="row">
                                     <input id="delete-name" type="text" placeholder="输入用户名">
-                                    <p><button type="button" class="danger" onclick="deleteAccount()">注销账号</button></p>
+                                    <button type="button" class="danger" onclick="deleteAccount()">注销账号</button>
                                 </div>
                             </div>
                         </div>

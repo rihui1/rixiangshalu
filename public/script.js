@@ -57,6 +57,7 @@ function switchView(element) {
         document.getElementById('scrim').classList.remove('show');
     }
     if (targetId === 'view-profile') loadProfilePanel();
+    if (targetId === 'view-ai') loadChatHistory();
     if (targetId === 'view-home') renderHome();
 }
 
@@ -290,7 +291,13 @@ async function loadProfilePanel() {
         if (!res.ok) { alert(data.error || '加载失败'); return; }
         document.getElementById('profile-username').textContent = data.username || '';
         document.getElementById('profile-uid').textContent = data.uid || '分配失败，请刷新';
+        document.getElementById('profile-email').textContent = data.email || '未绑定';
         document.getElementById('profile-signature').value = data.signature || '';
+        document.getElementById('profile-birthday').value = data.birthday || '';
+        document.getElementById('profile-joined').textContent = (data.created_at || '').slice(0, 10) || '—';
+        const stats = data.stats || {};
+        document.getElementById('stat-posts').textContent = stats.posts || 0;
+        if (stats.chat) updateQuota(stats.chat);
         if (data.avatar) showAvatar(data.avatar);
     } catch (err) { alert('网络请求失败，请检查后端是否启动'); }
 }
@@ -344,7 +351,8 @@ async function saveProfile() {
             headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
             body: JSON.stringify({
                 avatar: currentAvatarBase64,
-                signature: document.getElementById('profile-signature').value
+                signature: document.getElementById('profile-signature').value,
+                birthday: document.getElementById('profile-birthday').value
             })
         });
         const data = await res.json().catch(() => ({}));
@@ -373,39 +381,143 @@ async function deleteAccount() {
     } catch (err) { alert('注销失败，请检查网络'); }
 }
 
+function sendBindCode() {
+    sendCodeTo(document.getElementById('bind-email').value.trim(), document.getElementById('bind-code-btn'), '获取验证码');
+}
+
+async function bindEmail() {
+    if (!token) return openView('view-profile');
+    const email = document.getElementById('bind-email').value.trim();
+    const code = document.getElementById('bind-code').value.trim();
+    if (!email || !code) return alert('请填写新邮箱和验证码');
+    try {
+        const res = await fetch('/api/user/bind-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+            body: JSON.stringify({ email, code })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) return alert(data.error || '绑定失败');
+        document.getElementById('profile-email').textContent = data.email;
+        document.getElementById('bind-email').value = '';
+        document.getElementById('bind-code').value = '';
+        alert('邮箱已更新');
+    } catch (err) { alert('绑定失败，请检查网络'); }
+}
+
+async function changePassword() {
+    if (!token) return openView('view-profile');
+    const oldPassword = document.getElementById('old-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    if (!oldPassword || !newPassword) return alert('请填写当前密码和新密码');
+    if (newPassword.length < 6) return alert('新密码至少 6 位');
+    try {
+        const res = await fetch('/api/user/change-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+            body: JSON.stringify({ oldPassword, newPassword })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) return alert(data.error || '修改失败');
+        alert('密码已修改，请用新密码重新登录');
+        logout();
+    } catch (err) { alert('修改失败，请检查网络'); }
+}
+
+function appendBubble(role, text) {
+    const history = document.getElementById('chat-history');
+    const node = document.createElement('div');
+    node.className = 'bubble ' + (role === 'user' ? 'user' : 'ai');
+    node.textContent = text;
+    history.appendChild(node);
+    return node;
+}
+
+function updateQuota(quota) {
+    if (!quota) return;
+    const used = quota.used || 0;
+    const limit = quota.limit || 0;
+    document.getElementById('chat-used').textContent = used;
+    document.getElementById('chat-limit').textContent = limit;
+    document.getElementById('stat-chat').textContent = used;
+    const fill = document.getElementById('quota-fill');
+    if (fill) fill.style.width = (limit ? Math.min(100, (used / limit) * 100) : 0) + '%';
+    const pill = document.getElementById('chat-quota');
+    if (pill) pill.textContent = token ? '今日剩余 ' + quota.remaining + ' 条' : '登录后可保存聊天记录';
+}
+
+async function loadChatHistory() {
+    const history = document.getElementById('chat-history');
+    if (!token) {
+        history.innerHTML = '<div class="bubble ai">登录后聊天记录会保存在服务器，下次登录可以接着聊。<br>' +
+            '<button type="button" class="link-inline" onclick="openView(\'view-profile\')">去登录</button></div>';
+        const pill = document.getElementById('chat-quota');
+        if (pill) pill.textContent = '登录后可保存聊天记录';
+        return;
+    }
+    try {
+        const res = await fetch('/api/chat/history', { headers: { Authorization: 'Bearer ' + token } });
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 401) { logout(); return; }
+        if (!res.ok) return;
+        history.innerHTML = '';
+        if (!data.messages || !data.messages.length) {
+            history.innerHTML = '<div class="bubble ai">你好，我是日向的 AI 助手。有什么想问的直接说吧。</div>';
+        } else {
+            data.messages.forEach((m) => appendBubble(m.role, m.content));
+        }
+        updateQuota(data.quota);
+        history.scrollTop = history.scrollHeight;
+    } catch (err) { /* 网络异常时保持欢迎语 */ }
+}
+
+async function clearChatHistory() {
+    if (!token) { openView('view-profile'); return; }
+    if (!confirm('确定清空全部聊天记录吗？当日额度不会恢复。')) return;
+    try {
+        const res = await fetch('/api/chat/history', { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) return alert(data.error || '清空失败');
+        await loadChatHistory();
+    } catch (err) { alert('清空失败，请检查网络'); }
+}
+
 async function sendToAI() {
     const input = document.getElementById('ai-input');
     const sendBtn = document.getElementById('send-btn');
     const message = input.value.trim();
     if (!message) return;
+    if (!token) {
+        alert('登录后才能使用 AI，并把聊天记录保存到服务器');
+        openView('view-profile');
+        return;
+    }
     const history = document.getElementById('chat-history');
-    const mine = document.createElement('div');
-    mine.className = 'bubble user';
-    mine.textContent = message;
-    history.appendChild(mine);
+    appendBubble('user', message);
     input.value = '';
     sendBtn.disabled = true;
-    const loading = document.createElement('div');
-    loading.className = 'bubble ai';
+    const loading = appendBubble('ai', '正在想...');
     loading.id = 'loading-msg';
-    loading.textContent = '正在想...';
-    history.appendChild(loading);
     history.scrollTop = history.scrollHeight;
     try {
         const res = await fetch('/api/chat', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
             body: JSON.stringify({ message })
         });
         const data = await res.json().catch(() => ({}));
+        if (res.status === 401) { loading.remove(); logout(); return; }
         loading.remove();
-        const reply = document.createElement('div');
-        reply.className = 'bubble ai';
-        reply.textContent = res.ok ? data.reply : ('出错啦：' + (data.error || '请求失败'));
-        history.appendChild(reply);
+        if (!res.ok) {
+            const errNode = appendBubble('ai', data.error || '请求失败');
+            errNode.classList.add('error');
+            if (data.quota) updateQuota(data.quota);
+            return;
+        }
+        appendBubble('assistant', data.reply);
+        updateQuota(data.quota);
     } catch (err) {
-        const node = document.getElementById('loading-msg');
-        if (node) node.textContent = '网络请求失败';
+        loading.textContent = '网络请求失败，请稍后再试';
     } finally {
         sendBtn.disabled = false;
         history.scrollTop = history.scrollHeight;
