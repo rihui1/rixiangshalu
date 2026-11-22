@@ -19,8 +19,8 @@ const transporter = nodemailer.createTransport({
 });
 
 const openai = new OpenAI({
-    apiKey: 'sk-cyscaygfporxnhagizpoezntsrrgovanhcwxumdxmytxfcwy',
-    baseURL: 'https://api.siliconflow.cn/v1'
+    apiKey: process.env.SILICONFLOW_API_KEY,
+    baseURL: process.env.SILICONFLOW_BASE_URL || 'https://api.siliconflow.cn/v1'
 });
 
 const db = new Database('./database.db');
@@ -54,7 +54,11 @@ try { db.exec("ALTER TABLE users ADD COLUMN uid TEXT UNIQUE;"); } catch (e) {}
 try { db.exec("ALTER TABLE users ADD COLUMN avatar TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE users ADD COLUMN signature TEXT DEFAULT '这个人很懒，什么都没写';"); } catch (e) {}
 
-const JWT_SECRET = 'your_super_secret_key';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    console.error('缺少环境变量 JWT_SECRET，请在 .env 中配置后重新启动');
+    process.exit(1);
+}
 
 // 生成不重复的 8 位随机 UID
 function generateUID() {
