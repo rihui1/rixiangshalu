@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>用户中心</title>
-    <!-- 引入裁剪库 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <style>
@@ -14,16 +13,12 @@
         .header-bar a { color: #cbd5e1; text-decoration: none; font-size: 14px; }
         .header-bar a:hover { color: white; }
         .content { padding: 30px; display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap; }
-        
-        /* 左侧头像 */
         .avatar-section { text-align: center; width: 200px; }
         .avatar-wrapper { width: 150px; height: 150px; border-radius: 50%; background: #e2e8f0; margin: 0 auto; position: relative; cursor: pointer; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); overflow: hidden; }
         .avatar-wrapper img { width: 100%; height: 100%; object-fit: cover; display: none; }
         .avatar-text { line-height: 142px; color: #94a3b8; font-size: 14px; }
         .tip { font-size: 12px; color: #888; margin-top: 10px; }
-
-        /* 右侧信息 */
-        .info-section { flex: 1; min-width: 300px; }
+        .info-section { flex: 1; min-width: 280px; }
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 8px; color: #475569; font-weight: bold; }
         .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 14px; outline: none; background: #f8fafc; }
@@ -31,32 +26,27 @@
         .form-group input:disabled { background: #e2e8f0; color: #64748b; cursor: not-allowed; }
         .btn-save { background: #007bff; color: white; border: none; padding: 12px 30px; border-radius: 8px; font-size: 16px; cursor: pointer; width: 100%; font-weight: bold; }
         .btn-save:hover { background: #0056b3; }
-
-        /* 裁剪框 */
         #crop-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; }
-        .crop-box { width: 400px; height: 400px; background: #fff; padding: 10px; border-radius: 8px; }
+        .crop-box { width: min(400px, 90vw); height: min(400px, 90vw); background: #fff; padding: 10px; border-radius: 8px; }
         .crop-actions { margin-top: 20px; display: flex; gap: 15px; }
-        .crop-actions button { padding: 10px 20px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; }
+        .crop-actions button { padding: 10px 20px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; color: white; }
     </style>
 </head>
 <body>
-
     <div class="profile-card">
         <div class="header-bar">
             <span>用户中心</span>
             <a href="index.html">返回首页</a>
         </div>
-
         <div class="content">
             <div class="avatar-section">
                 <div class="avatar-wrapper" id="avatar-click-area">
-                    <img id="avatar-img" src="">
+                    <img id="avatar-img" alt="">
                     <div class="avatar-text" id="avatar-text">点击上传</div>
                 </div>
-                <input type="file" id="avatar-input" accept="image/*" style="display: none;">
+                <input type="file" id="avatar-input" accept="image/*" hidden>
                 <div class="tip">支持 1:1 比例裁切</div>
             </div>
-
             <div class="info-section">
                 <div class="form-group">
                     <label>用户名</label>
@@ -70,137 +60,145 @@
                     <label>个性签名</label>
                     <textarea id="signature-input" rows="4" placeholder="介绍一下自己吧..."></textarea>
                 </div>
-                <button class="btn-save" onclick="saveProfile()">保存修改</button>
+                <button type="button" class="btn-save" onclick="saveProfile()">保存修改</button>
             </div>
         </div>
     </div>
 
     <div id="crop-modal">
         <div class="crop-box">
-            <img id="crop-image" style="max-width: 100%; max-height: 100%;">
+            <img id="crop-image" alt="">
         </div>
         <div class="crop-actions">
-            <button style="background: #007bff; color: white;" onclick="confirmCrop()">确认裁切</button>
-            <button style="background: #ef4444; color: white;" onclick="closeCropModal()">取消</button>
+            <button type="button" style="background:#007bff;" onclick="confirmCrop()">确认裁切</button>
+            <button type="button" style="background:#ef4444;" onclick="closeCropModal()">取消</button>
         </div>
     </div>
 
     <script>
         const token = localStorage.getItem('token');
-        if (!token) {
-            alert('请先登录！');
-            window.location.href = 'login.html';
-        }
-
         let cropper = null;
-        let currentAvatarBase64 = "";
+        let currentAvatarBase64 = '';
+
+        function showAvatar(src) {
+            const img = document.getElementById('avatar-img');
+            img.src = src;
+            img.style.display = 'block';
+            document.getElementById('avatar-text').style.display = 'none';
+            currentAvatarBase64 = src;
+        }
 
         async function loadUserProfile() {
             try {
                 const res = await fetch('/api/user/profile', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { Authorization: `Bearer ${token}` }
                 });
-                const data = await res.json();
-                
+                const data = await res.json().catch(() => ({}));
+
+                if (res.status === 401) {
+                    alert(data.error || '登录已过期，请重新登录');
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('username');
+                    localStorage.removeItem('user_avatar');
+                    location.href = 'login.html';
+                    return;
+                }
                 if (!res.ok) {
-                    alert(data.error || '加载失败，请重新登录');
-                    localStorage.clear();
-                    window.location.href = 'login.html';
+                    alert(data.error || '加载失败');
                     return;
                 }
 
-                document.getElementById('username-display').value = data.username;
-                document.getElementById('uid-display').value = data.uid; 
-                document.getElementById('signature-input').value = data.signature;
-
-                if (data.avatar) {
-                    const img = document.getElementById('avatar-img');
-                    img.src = data.avatar;
-                    img.style.display = 'block';
-                    document.getElementById('avatar-text').style.display = 'none';
-                    currentAvatarBase64 = data.avatar;
-                }
+                document.getElementById('username-display').value = data.username || '';
+                document.getElementById('uid-display').value = data.uid || '';
+                document.getElementById('signature-input').value = data.signature || '';
+                if (data.avatar) showAvatar(data.avatar);
             } catch (err) {
-                console.error(err);
                 alert('网络请求失败，请检查后端是否启动');
             }
         }
 
-        document.getElementById('avatar-click-area').addEventListener('click', () => {
-            document.getElementById('avatar-input').click();
-        });
+        function initProfile() {
+            document.getElementById('avatar-click-area').addEventListener('click', () => {
+                document.getElementById('avatar-input').click();
+            });
 
-        document.getElementById('avatar-input').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const cropImage = document.getElementById('crop-image');
-                cropImage.src = event.target.result;
-                
-                document.getElementById('crop-modal').style.display = 'flex';
-                
-                if (cropper) cropper.destroy();
-                cropper = new Cropper(cropImage, {
-                    aspectRatio: 1, 
-                    viewMode: 1,
-                    background: false,
-                });
-            };
-            reader.readAsDataURL(file);
-            this.value = ''; 
-        });
+            document.getElementById('avatar-input').addEventListener('change', function (e) {
+                const file = e.target.files && e.target.files[0];
+                e.target.value = '';
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const cropImage = document.getElementById('crop-image');
+                    cropImage.onload = function () {
+                        document.getElementById('crop-modal').style.display = 'flex';
+                        if (cropper) cropper.destroy();
+                        cropper = new Cropper(cropImage, {
+                            aspectRatio: 1,
+                            viewMode: 1,
+                            background: false
+                        });
+                    };
+                    cropImage.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+
+            loadUserProfile();
+        }
 
         function confirmCrop() {
             if (!cropper) return;
             const canvas = cropper.getCroppedCanvas({ width: 300, height: 300 });
-            const base64Image = canvas.toDataURL('image/jpeg', 0.8);
-            
-            document.getElementById('avatar-img').src = base64Image;
-            document.getElementById('avatar-img').style.display = 'block';
-            document.getElementById('avatar-text').style.display = 'none';
-            
-            currentAvatarBase64 = base64Image;
+            showAvatar(canvas.toDataURL('image/jpeg', 0.8));
             closeCropModal();
         }
 
         function closeCropModal() {
             document.getElementById('crop-modal').style.display = 'none';
-            if (cropper) cropper.destroy();
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
         }
 
         async function saveProfile() {
+            if (!token) {
+                location.href = 'login.html';
+                return;
+            }
             const signature = document.getElementById('signature-input').value;
             try {
                 const res = await fetch('/api/user/update', {
                     method: 'POST',
-                    headers: { 
+                    headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}` 
+                        Authorization: `Bearer ${token}`
                     },
-                    body: JSON.stringify({ 
-                        avatar: currentAvatarBase64, 
-                        signature: signature 
+                    body: JSON.stringify({
+                        avatar: currentAvatarBase64,
+                        signature
                     })
                 });
-                
-                if (res.ok) {
-                    if (currentAvatarBase64) {
-                        localStorage.setItem('user_avatar', currentAvatarBase64);
-                    }
-                    alert('保存成功！');
-                    window.location.href = 'index.html'; 
-                } else {
-                    const data = await res.json();
-                    alert('保存失败：' + data.error);
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    alert('保存失败：' + (data.error || res.status));
+                    return;
                 }
+                if (currentAvatarBase64) localStorage.setItem('user_avatar', currentAvatarBase64);
+                alert('保存成功！');
+                location.href = 'index.html';
             } catch (err) {
                 alert('保存失败，请检查网络');
             }
         }
 
-        window.onload = loadUserProfile;
+        if (!token) {
+            alert('请先登录！');
+            location.replace('login.html');
+        } else {
+            initProfile();
+        }
     </script>
 </body>
 </html>

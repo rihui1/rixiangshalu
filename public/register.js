@@ -1,8 +1,7 @@
-// 发送验证码
 async function sendCode() {
-    const email = document.getElementById('reg-email').value;
+    const email = document.getElementById('reg-email').value.trim();
     if (!email) return alert('请先填写邮箱');
-    
+
     const btn = document.getElementById('send-code-btn');
     btn.disabled = true;
     btn.innerText = '发送中...';
@@ -13,25 +12,25 @@ async function sendCode() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email })
         });
-        
-        if (res.ok) {
-            alert('验证码已发送，请查收邮件！');
-            let countdown = 60;
-            const timer = setInterval(() => {
-                countdown--;
-                btn.innerText = `${countdown}秒`;
-                if (countdown <= 0) {
-                    clearInterval(timer);
-                    btn.disabled = false;
-                    btn.innerText = '获取验证码';
-                }
-            }, 1000);
-        } else {
-            const data = await res.json();
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
             alert(data.error || '发送失败');
             btn.disabled = false;
             btn.innerText = '获取验证码';
+            return;
         }
+
+        alert('验证码已发送，请查收邮件！');
+        let countdown = 60;
+        const timer = setInterval(() => {
+            countdown -= 1;
+            btn.innerText = countdown + '秒';
+            if (countdown <= 0) {
+                clearInterval(timer);
+                btn.disabled = false;
+                btn.innerText = '获取验证码';
+            }
+        }, 1000);
     } catch (err) {
         alert('网络请求失败');
         btn.disabled = false;
@@ -39,30 +38,33 @@ async function sendCode() {
     }
 }
 
-// 注册提交
 async function register() {
-    const username = document.getElementById('reg-username').value;
+    const username = document.getElementById('reg-username').value.trim();
     const password = document.getElementById('reg-password').value;
-    const email = document.getElementById('reg-email').value;
-    const code = document.getElementById('verify-code').value;
+    const email = document.getElementById('reg-email').value.trim();
+    const code = document.getElementById('verify-code').value.trim();
+    const msg = document.getElementById('auth-msg');
 
     if (!username || !password || !email || !code) {
-        return document.getElementById('auth-msg').innerText = '请填写完整信息';
+        msg.innerText = '请填写完整信息';
+        return;
     }
-    
-    const res = await fetch('/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, email, code })
-    });
-    const data = await res.json();
-    
-    if (res.ok) {
+
+    try {
+        const res = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password, email, code })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            msg.style.color = 'red';
+            msg.innerText = data.error || '注册失败';
+            return;
+        }
         alert('注册成功！即将跳转到登录页面...');
-        // 👇 注册成功后跳转回 index.html，并把用户名带过去
-        window.location.href = `index.html?username=${encodeURIComponent(username)}`;
-    } else {
-        document.getElementById('auth-msg').style.color = 'red';
-        document.getElementById('auth-msg').innerText = data.error;
+        location.href = 'login.html';
+    } catch (err) {
+        msg.innerText = '网络请求失败';
     }
 }

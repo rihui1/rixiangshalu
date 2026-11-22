@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>登录 - 日向的网站</title>
     <style>
-        body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f2f5; font-family: sans-serif; }
-        .login-box { width: 100%; max-width: 400px; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f0f2f5; font-family: sans-serif; }
+        .login-box { width: 100%; max-width: 400px; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); box-sizing: border-box; }
         .login-box h2 { text-align: center; margin-bottom: 20px; color: #333; }
         input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         button { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top: 10px; }
@@ -16,34 +16,30 @@
     </style>
 </head>
 <body>
-
     <div class="login-box">
         <h2>登录</h2>
-        
-        <!-- 密码登录模式 -->
+
         <div id="password-login-mode">
             <input type="text" id="username" placeholder="用户名">
             <input type="password" id="password" placeholder="密码">
-            <button onclick="login()">密码登录</button>
+            <button type="button" onclick="login()">密码登录</button>
         </div>
 
-        <!-- 验证码登录模式 -->
         <div id="email-login-mode" class="hidden">
             <input type="email" id="login-email" placeholder="注册时的邮箱">
             <div style="display: flex; gap: 10px;">
                 <input type="text" id="login-code" placeholder="6位验证码" style="flex: 1; margin-bottom: 0;">
-                <button onclick="sendLoginCode()" id="login-code-btn" style="width: 120px; margin-top: 0;">获取验证码</button>
+                <button type="button" onclick="sendLoginCode()" id="login-code-btn" style="width: 120px; margin-top: 0;">获取验证码</button>
             </div>
-            <button onclick="loginWithEmail()" style="background-color: #28a745;">验证码登录</button>
+            <button type="button" onclick="loginWithEmail()" style="background-color: #28a745;">验证码登录</button>
         </div>
 
         <p style="text-align: center; margin-top: 15px;">
-            <button class="link-btn" onclick="toggleLoginMode()" id="toggle-mode-text">使用邮箱验证码登录</button>
+            <button type="button" class="link-btn" onclick="toggleLoginMode()" id="toggle-mode-text">使用邮箱验证码登录</button>
         </p>
-        
+
         <p id="auth-msg" style="color: red; text-align: center; margin-top: 10px;"></p>
         <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-        
         <p style="text-align: center; margin-top: 10px;">
             <a href="index.html" style="color: #666; font-size: 14px;">返回首页</a>
         </p>
@@ -51,6 +47,7 @@
 
     <script>
         let isEmailMode = false;
+
         function toggleLoginMode() {
             isEmailMode = !isEmailMode;
             document.getElementById('password-login-mode').classList.toggle('hidden', isEmailMode);
@@ -58,78 +55,91 @@
             document.getElementById('toggle-mode-text').innerText = isEmailMode ? '使用密码登录' : '使用邮箱验证码登录';
         }
 
+        function saveLogin(data) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('username', data.username);
+            if (data.avatar) localStorage.setItem('user_avatar', data.avatar);
+            else localStorage.removeItem('user_avatar');
+            location.href = 'index.html';
+        }
+
         async function login() {
-            const username = document.getElementById('username').value;
+            const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
             if (!username || !password) return alert('请填写完整');
 
-            const res = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('username', data.username);
-                if(data.avatar) localStorage.setItem('user_avatar', data.avatar);
-                window.location.href = 'index.html';
-            } else {
-                document.getElementById('auth-msg').innerText = data.error;
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    document.getElementById('auth-msg').innerText = data.error || '登录失败';
+                    return;
+                }
+                saveLogin(data);
+            } catch (err) {
+                document.getElementById('auth-msg').innerText = '网络请求失败';
             }
         }
 
         async function loginWithEmail() {
-            const email = document.getElementById('login-email').value;
-            const code = document.getElementById('login-code').value;
+            const email = document.getElementById('login-email').value.trim();
+            const code = document.getElementById('login-code').value.trim();
             if (!email || !code) return alert('请填写完整');
 
-            const res = await fetch('/api/login-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, code })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('username', data.username);
-                window.location.href = 'index.html';
-            } else {
-                document.getElementById('auth-msg').innerText = data.error;
+            try {
+                const res = await fetch('/api/login-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, code })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    document.getElementById('auth-msg').innerText = data.error || '登录失败';
+                    return;
+                }
+                saveLogin(data);
+            } catch (err) {
+                document.getElementById('auth-msg').innerText = '网络请求失败';
             }
         }
 
         async function sendLoginCode() {
-            const email = document.getElementById('login-email').value;
+            const email = document.getElementById('login-email').value.trim();
             if (!email) return alert('请先填写邮箱');
+
             const btn = document.getElementById('login-code-btn');
             btn.disabled = true;
             btn.innerText = '发送中...';
-            
+
             try {
                 const res = await fetch('/api/send-code', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email })
                 });
-                if (res.ok) {
-                    alert('验证码已发送！');
-                    let countdown = 60;
-                    const timer = setInterval(() => {
-                        countdown--;
-                        btn.innerText = `${countdown}秒`;
-                        if (countdown <= 0) {
-                            clearInterval(timer);
-                            btn.disabled = false;
-                            btn.innerText = '获取验证码';
-                        }
-                    }, 1000);
-                } else {
-                    alert('发送失败');
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    alert(data.error || '发送失败');
                     btn.disabled = false;
                     btn.innerText = '获取验证码';
+                    return;
                 }
-            } catch (e) {
+                alert('验证码已发送！');
+                let countdown = 60;
+                const timer = setInterval(() => {
+                    countdown -= 1;
+                    btn.innerText = countdown + '秒';
+                    if (countdown <= 0) {
+                        clearInterval(timer);
+                        btn.disabled = false;
+                        btn.innerText = '获取验证码';
+                    }
+                }, 1000);
+            } catch (err) {
                 alert('网络请求失败');
                 btn.disabled = false;
                 btn.innerText = '获取验证码';
