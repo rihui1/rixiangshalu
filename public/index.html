@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>日向论坛</title>
-    <link rel="stylesheet" href="app.css?v=1.0.7c">
+    <link rel="stylesheet" href="app.css?v=1.0.8">
 </head>
 <body>
     <div class="scrim" id="scrim" onclick="toggleSidebar()"></div>
@@ -40,6 +40,10 @@
                 <button type="button" class="nav-item" data-target="view-convert" onclick="switchView(this)">
                     <svg viewBox="0 0 24 24"><path d="M7 7h9.2l-2.6-2.6L15 3l5 5-5 5-1.4-1.4L16.2 9H7zm10 10H7.8l2.6 2.6L9 21l-5-5 5-5 1.4 1.4L7.8 15H17z"/></svg>
                     <span class="nav-text">格式转换</span>
+                </button>
+                <button type="button" class="nav-item" data-target="view-docs" onclick="switchView(this)">
+                    <svg viewBox="0 0 24 24"><path d="M6 2h8l4 4v16H6zm7 1.5V7h3.5zM8 11h8v2H8zm0 4h8v2H8z"/></svg>
+                    <span class="nav-text">文档转换</span>
                 </button>
                 <button type="button" class="nav-item" data-target="view-svc" onclick="switchView(this)">
                     <svg viewBox="0 0 24 24"><path d="M3 15c2 0 2-6 4-6s2 6 4 6 2-6 4-6 2 6 4 6 2-3 2-3v2s-1 3-4 3-2-6-4-6-2 6-4 6-2-6-4-6-2 6-4 6v-2s1 3 2 3z"/></svg>
@@ -152,6 +156,53 @@
                     </div>
                 </section>
 
+                <section id="view-docs" class="view-section">
+                    <div class="panel convert-panel">
+                        <div class="convert-head">
+                            <h3>文档与图片转换</h3>
+                            <span class="convert-note">全部在浏览器本地完成，文件不会上传服务器</span>
+                        </div>
+
+                        <div class="convert-tabs" id="docs-tabs">
+                            <button type="button" class="convert-tab active" data-docmode="img2img" onclick="switchDocMode('img2img')">图片格式</button>
+                            <button type="button" class="convert-tab" data-docmode="img2pdf" onclick="switchDocMode('img2pdf')">图片 → PDF</button>
+                            <button type="button" class="convert-tab" data-docmode="pdf2img" onclick="switchDocMode('pdf2img')">PDF → 图片</button>
+                            <button type="button" class="convert-tab" data-docmode="doc2pdf" onclick="switchDocMode('doc2pdf')">文档 → PDF</button>
+                            <button type="button" class="convert-tab" data-docmode="pdf2txt" onclick="switchDocMode('pdf2txt')">PDF → 文本</button>
+                        </div>
+
+                        <label class="drop-zone" id="docs-drop">
+                            <input type="file" id="docs-file" accept="image/*" multiple hidden onchange="docsPick(event)">
+                            <strong id="docs-drop-title">点击选择图片，或拖到这里</strong>
+                            <span id="docs-drop-hint">支持 PNG / JPG / JPEG / WEBP / GIF / BMP</span>
+                        </label>
+
+                        <div class="file-info" id="docs-file-info" hidden></div>
+
+                        <div class="convert-options">
+                            <label>输出格式
+                                <select id="docs-format"></select>
+                            </label>
+                            <label id="docs-quality-wrap">质量
+                                <select id="docs-quality">
+                                    <option value="0.92">高质量</option>
+                                    <option value="0.82" selected>标准</option>
+                                    <option value="0.7">小体积</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="convert-progress" id="docs-progress-wrap" hidden>
+                            <div class="convert-progress-bar"><i id="docs-progress"></i></div>
+                        </div>
+
+                        <p class="convert-status" id="docs-status">文件会在浏览器本地处理，不会上传服务器。</p>
+                        <p><button type="button" class="primary" id="docs-btn" onclick="docsRun()" disabled>开始转换</button></p>
+                        <div class="docs-list" id="docs-list"></div>
+                        <p class="convert-hint">浏览器无法解码相机 RAW（.cr2 / .nef / .arw），请先导出为 JPG 或 TIFF 再转换。</p>
+                    </div>
+                </section>
+
                 <section id="view-svc" class="view-section">
                     <div class="frame-wrap">
                         <iframe src="https://svc.rixiangshalu.xyz" title="SVC 语音转换"></iframe>
@@ -162,7 +213,16 @@
                     <div class="panel">
                         <h3>更新日志</h3>
                         <article class="release">
-                            <h2>v1.0.7 <span class="badge badge-new">最新</span></h2>
+                            <h2>v1.0.8 <span class="badge badge-new">最新</span></h2>
+                            <p>2026年11月23日</p>
+                            <ul>
+                                <li><span class="badge badge-new">新增</span>「文档转换」工具：图片转 PDF、PDF 转图片（PNG / JPG / WEBP）、文档转 PDF、PDF 提取文字。</li>
+                                <li><span class="badge badge-new">新增</span>图片格式互转：PNG / JPG / JPEG / WEBP，可调质量，支持批量。</li>
+                                <li><span class="badge badge-new">新增</span>全站反爬虫策略：robots.txt、常见采集与 AI 爬虫 UA 拦截、接口频率限制。</li>
+                            </ul>
+                        </article>
+                        <article class="release">
+                            <h2>v1.0.7</h2>
                             <p>2026年11月23日</p>
                             <ul>
                                 <li><span class="badge badge-new">新增</span>左侧工具栏加入「格式转换」：视频提取音频，支持 MP3 / WAV / FLAC / OGG / M4A / AAC / OPUS。</li>
@@ -362,7 +422,8 @@
             </div>
         </div>
     </div>
-    <script src="script.js?v=1.0.7c"></script>
-    <script src="convert.js?v=1.0.7c"></script>
+    <script src="script.js?v=1.0.8"></script>
+    <script src="convert.js?v=1.0.8"></script>
+    <script src="docconvert.js?v=1.0.8"></script>
 </body>
 </html>

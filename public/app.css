@@ -304,6 +304,13 @@ button { cursor: pointer; }
 .convert-result strong { color: var(--ok); }
 .convert-result span { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
 .download-btn { display: inline-block; text-decoration: none; color: white; }
+.docs-list { display: grid; gap: 10px; margin-top: 14px; }
+.docs-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 11px 14px; border-radius: 12px; background: #fbf6ec; border: 1px solid var(--line);
+    font-size: 13px; color: var(--ink); overflow-wrap: anywhere;
+}
+.convert-hint { color: var(--muted); font-size: 12px; line-height: 1.7; margin: 12px 0 0; }
 
 @media (max-width: 900px) {
     .convert-options label { min-width: 100%; }

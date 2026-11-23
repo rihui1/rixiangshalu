@@ -16,11 +16,62 @@ app.set('trust proxy', true);
 let requestCount = 0;
 app.use((req, res, next) => { requestCount += 1; next(); });
 
+// ================= 反爬虫与基础防护 =================
+app.disable('x-powered-by');
+
+// 常见采集器 / AI 爬虫的 UA 特征，命中直接拒绝
+const BAD_UA = /(python-requests|python-urllib|aiohttp|httpx|scrapy|curl\/|wget\/|libwww-perl|httpclient|go-http-client|okhttp|java\/|node-fetch|axios\/|headlesschrome|phantomjs|puppeteer|playwright|selenium|webdriver|ahrefsbot|semrushbot|mj12bot|dotbot|blexbot|petalbot|serpstatbot|bytespider|gptbot|chatgpt-user|oai-searchbot|ccbot|claudebot|anthropic-ai|perplexitybot|amazonbot|imagesiftbot|diffbot|dataforseobot|zoominfobot)/i;
+// 主流搜索引擎保留收录，避免误伤正常流量
+const GOOD_UA = /(googlebot|google-inspectiontool|bingbot|baiduspider|sogou|360spider|yisouspider|msnbot|duckduckbot)/i;
+// 探测后台、备份、源码的典型路径
+const BAD_PATH = /(^|\/)(\.env|\.git|\.svn|\.hg|\.htaccess|\.DS_Store|wp-admin|wp-login\.php|xmlrpc\.php|phpmyadmin|pma|adminer|config\.json|config\.php|backup|dump\.sql)|\.(php|asp|aspx|jsp|cgi|env|sql|bak|old|swp|zip|tar|gz|rar|7z)$/i;
+// /api 限流：同一 IP 每分钟最多 180 次请求
+const RATE_WINDOW_MS = 60 * 1000;
+const RATE_MAX = 180;
+const rateHits = new Map();
+
+function safeDecode(pathname) {
+    try { return decodeURIComponent(pathname); } catch (e) { return pathname; }
+}
+
+app.use((req, res, next) => {
+    const ua = String(req.headers['user-agent'] || '');
+    if (!GOOD_UA.test(ua) && (!ua || BAD_UA.test(ua))) {
+        return res.status(403).type('text/plain').send('403 Forbidden：本站禁止自动化采集');
+    }
+    if (BAD_PATH.test(safeDecode(req.path))) {
+        return res.status(404).type('text/plain').send('404 Not Found');
+    }
+    next();
+});
+
+app.use('/api', (req, res, next) => {
+    const ip = req.ip || 'unknown';
+    const now = Date.now();
+    let rec = rateHits.get(ip);
+    if (!rec || now - rec.start >= RATE_WINDOW_MS) rec = { start: now, count: 0 };
+    rec.count += 1;
+    rateHits.set(ip, rec);
+    if (rateHits.size > 5000) {
+        rateHits.forEach((v, k) => { if (now - v.start >= RATE_WINDOW_MS) rateHits.delete(k); });
+    }
+    if (rec.count > RATE_MAX) {
+        res.setHeader('Retry-After', String(Math.ceil((rec.start + RATE_WINDOW_MS - now) / 1000)));
+        return res.status(429).json({ error: '请求太频繁了，请稍后再试' });
+    }
+    next();
+});
+
 app.use(['/admin.html', '/api/admin'], (req, res, next) => {
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'no-referrer');
+    next();
+});
+
+app.use(['/admin.html', '/api'], (req, res, next) => {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     next();
 });
 
