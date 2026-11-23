@@ -7,6 +7,7 @@ const HASH_TO_VIEW = {
     home: 'view-home',
     forum: 'view-forum',
     ai: 'view-ai',
+    convert: 'view-convert',
     svc: 'view-svc',
     changelog: 'view-changelog',
     profile: 'view-profile'
@@ -58,6 +59,7 @@ function switchView(element) {
     }
     if (targetId === 'view-profile') loadProfilePanel();
     if (targetId === 'view-ai') loadChatHistory();
+    if (targetId === 'view-convert' && window.initConvertView) window.initConvertView();
     if (targetId === 'view-home') renderHome();
 }
 
