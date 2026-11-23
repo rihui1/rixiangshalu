@@ -532,6 +532,74 @@ app.post('/api/chat', async (req, res) => {
     }
 });
 
+// ================= 翻译 =================
+const LANG_NAMES = {
+    zh: '简体中文',
+    en: '英语',
+    ja: '日语',
+    ko: '韩语',
+    fr: '法语',
+    de: '德语',
+    es: '西班牙语',
+    ru: '俄语',
+    pt: '葡萄牙语',
+    it: '意大利语',
+    ar: '阿拉伯语',
+    th: '泰语'
+};
+// 翻译限流：同一 IP 每分钟最多 20 次
+const TRANSLATE_LIMIT = 20;
+const translateHits = new Map();
+
+app.post('/api/translate', async (req, res) => {
+    const ip = req.ip || 'unknown';
+    const now = Date.now();
+    let rec = translateHits.get(ip);
+    if (!rec || now - rec.start >= 60000) rec = { start: now, count: 0 };
+    rec.count += 1;
+    translateHits.set(ip, rec);
+    if (translateHits.size > 5000) {
+        translateHits.forEach((v, k) => { if (now - v.start >= 60000) translateHits.delete(k); });
+    }
+    if (rec.count > TRANSLATE_LIMIT) {
+        return res.status(429).json({ error: '翻译太频繁了，休息一下再试' });
+    }
+
+    const text = String((req.body && req.body.text) || '').trim();
+    const from = String((req.body && req.body.from) || 'auto');
+    const to = String((req.body && req.body.to) || 'zh');
+    if (!text) return res.status(400).json({ error: '内容不能为空' });
+    if (text.length > 4000) return res.status(400).json({ error: '内容太长，请控制在 4000 字以内' });
+    if (!LANG_NAMES[to]) return res.status(400).json({ error: '不支持的目标语言' });
+    if (from !== 'auto' && !LANG_NAMES[from]) return res.status(400).json({ error: '不支持的源语言' });
+    if (from === to) return res.json({ text });
+
+    const targetName = LANG_NAMES[to] === '简体中文' ? '中文' : LANG_NAMES[to];
+    const sourceNote = from === 'auto' ? '请自动识别原文语言。' : '原文语言是' + LANG_NAMES[from] + '。';
+
+    try {
+        const response = await openai.chat.completions.create({
+            model: CHAT_MODEL,
+            temperature: 0.2,
+            messages: [
+                {
+                    role: 'system',
+                    content: '你是专业翻译引擎。' + sourceNote + '把用户提供的内容准确、自然地翻译成' +
+                        targetName + '。只输出译文本身，不要解释、不要加引号、不要附带原文。'
+                },
+                { role: 'user', content: text }
+            ]
+        });
+        const out = String((response.choices && response.choices[0] && response.choices[0].message &&
+            response.choices[0].message.content) || '').trim();
+        if (!out) return res.status(502).json({ error: '翻译没有返回内容，请稍后再试' });
+        res.json({ text: out });
+    } catch (error) {
+        console.error('翻译调用失败：', error.message);
+        res.status(502).json({ error: '翻译服务暂时不可用，请稍后再试' });
+    }
+});
+
 // ================= 超管后台 =================
 const ADMIN_USERNAME = String(process.env.ADMIN_USERNAME || '').trim();
 const ADMIN_PASSWORD_HASH = String(process.env.ADMIN_PASSWORD_HASH || '').trim();

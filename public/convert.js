@@ -68,6 +68,8 @@
         });
         fillFormats();
         setStatus(defaultHint());
+        if (next !== 'frame') renderFileInfo(currentFile);
+        if (window.onFrameModeChange) window.onFrameModeChange(next);
     }
 
     function escapeHtml(str) {
@@ -91,16 +93,27 @@
         pickFile(file);
     }
 
+    function renderFileInfo(file) {
+        const info = $('convert-file-info');
+        if (!info) return;
+        if (!file) {
+            info.hidden = true;
+            return;
+        }
+        info.hidden = false;
+        info.innerHTML = '<strong>' + escapeHtml(file.name) + '</strong><span>' +
+            (file.size / 1048576).toFixed(1) + ' MB</span>' +
+            '<button type="button" class="ghost small" onclick="clearConvertFile()">换一个</button>';
+    }
+
     function pickFile(file) {
         if (!file) return;
-        currentFile = file;
-        const info = $('convert-file-info');
-        if (info) {
-            info.hidden = false;
-            info.innerHTML = '<strong>' + escapeHtml(file.name) + '</strong><span>' +
-                (file.size / 1048576).toFixed(1) + ' MB</span>' +
-                '<button type="button" class="ghost small" onclick="clearConvertFile()">换一个</button>';
+        if (mode === 'frame') {
+            if (window.frameLoadFile) window.frameLoadFile(file);
+            return;
         }
+        currentFile = file;
+        renderFileInfo(file);
         const btn = $('convert-btn');
         if (btn) btn.disabled = false;
         const result = $('convert-result');
@@ -115,6 +128,10 @@
 
     function clearConvertFile() {
         if (busy) return;
+        if (mode === 'frame') {
+            if (window.frameClear) window.frameClear();
+            return;
+        }
         currentFile = null;
         const input = $('convert-file');
         if (input) input.value = '';
@@ -210,7 +227,7 @@
     }
 
     async function startConvert() {
-        if (busy || !currentFile) return;
+        if (mode === 'frame' || busy || !currentFile) return;
         const target = $('convert-format').value;
         const quality = $('convert-quality').value;
         const btn = $('convert-btn');
@@ -283,6 +300,7 @@
         if (!$('convert-format')) return;
         fillFormats();
         setStatus(defaultHint());
+        if (window.onFrameModeChange) window.onFrameModeChange(mode);
     }
 
     document.addEventListener('DOMContentLoaded', () => {

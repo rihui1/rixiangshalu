@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>日向论坛</title>
-    <link rel="stylesheet" href="app.css?v=1.1.1">
+    <link rel="stylesheet" href="app.css?v=1.1.2">
 </head>
 <body>
     <div class="scrim" id="scrim" onclick="toggleSidebar()"></div>
@@ -48,6 +48,10 @@
                 <button type="button" class="nav-item" data-target="view-unzip" onclick="switchView(this)">
                     <svg viewBox="0 0 24 24"><path d="M4 4h16v4H4zm1 5h14v11H5zm5 2v2h4v-2z"/></svg>
                     <span class="nav-text">解压工具</span>
+                </button>
+                <button type="button" class="nav-item" data-target="view-translate" onclick="switchView(this)">
+                    <svg viewBox="0 0 24 24"><path d="M4 5h8v2H9.6c.3 1.8 1 3.4 2 4.8-.7.7-1.5 1.3-2.4 1.8l-1-1.6c1-.6 1.8-1.4 2.3-2.4H4V7h3.4V5zm9 2h7v2h-2.4c-.3 1.6-.9 3-1.8 4.2.7.6 1.5 1 2.4 1.4l-.8 1.8c-1.1-.5-2-1.1-2.8-1.9-.8.8-1.7 1.4-2.8 1.9l-.8-1.8c.9-.4 1.7-.8 2.4-1.4-1-1.2-1.6-2.6-1.9-4.2H13V7zm4.2 0h2.2c.2 1.2.6 2.3 1.2 3.3-.5.4-1.1.7-1.7 1-.5-.7-.9-1.4-1.2-2.2-.2-.7-.4-1.4-.5-2.1zM6 14h8v2H9.5l4.6 4.4-1.3 1.5L7.9 17H6v-3z"/></svg>
+                    <span class="nav-text">翻译</span>
                 </button>
                 <button type="button" class="nav-item" data-target="view-svc" onclick="switchView(this)">
                     <svg viewBox="0 0 24 24"><path d="M3 15c2 0 2-6 4-6s2 6 4 6 2-6 4-6 2 6 4 6 2-3 2-3v2s-1 3-4 3-2-6-4-6-2 6-4 6-2-6-4-6-2 6-4 6v-2s1 3 2 3z"/></svg>
@@ -127,17 +131,18 @@
                         <div class="convert-tabs">
                             <button type="button" class="convert-tab active" data-mode="audio" onclick="switchConvertMode('audio')">提取 / 转音频</button>
                             <button type="button" class="convert-tab" data-mode="video" onclick="switchConvertMode('video')">转换视频</button>
+                            <button type="button" class="convert-tab" data-mode="frame" onclick="switchConvertMode('frame')">视频截图</button>
                         </div>
 
                         <label class="drop-zone" id="drop-zone">
                             <input type="file" id="convert-file" accept="video/*,audio/*" hidden onchange="onConvertFile(event)">
-                            <strong>点击选择文件，或把音视频拖到这里</strong>
-                            <span>常见 MP4 / MOV / MKV / WEBM / AVI / MP3 / WAV / FLAC / OGG / M4A 都可以</span>
+                            <strong id="convert-drop-title">点击选择文件，或把音视频拖到这里</strong>
+                            <span id="convert-drop-hint">常见 MP4 / MOV / MKV / WEBM / AVI / MP3 / WAV / FLAC / OGG / M4A 都可以</span>
                         </label>
 
                         <div class="file-info" id="convert-file-info" hidden></div>
 
-                        <div class="convert-options">
+                        <div class="convert-options" id="convert-options">
                             <label>输出格式
                                 <select id="convert-format"></select>
                             </label>
@@ -157,6 +162,25 @@
                         <p class="convert-status" id="convert-status">转换在浏览器本地完成，文件不会上传；首次使用需要加载约 32MB 的转换引擎。</p>
                         <p><button type="button" class="primary" id="convert-btn" onclick="startConvert()" disabled>开始转换</button></p>
                         <div class="convert-result" id="convert-result" hidden></div>
+
+                        <div id="frame-panel" hidden>
+                            <video id="frame-video" controls playsinline></video>
+                            <div class="frame-bar">
+                                <input type="range" id="frame-range" min="0" max="0" step="0.05" value="0" oninput="frameSeek(this.value)">
+                                <span id="frame-time">0.00s</span>
+                            </div>
+                            <div class="convert-options">
+                                <label>图片格式
+                                    <select id="frame-format">
+                                        <option value="image/png">PNG（无损）</option>
+                                        <option value="image/jpeg">JPG</option>
+                                    </select>
+                                </label>
+                            </div>
+                            <p><button type="button" class="primary" id="frame-btn" onclick="frameCapture()" disabled>截取当前帧</button></p>
+                            <div class="docs-list" id="frame-list"></div>
+                            <p class="convert-hint">拖动进度条选好画面后点「截取当前帧」，导出的是视频原始分辨率的图片。</p>
+                        </div>
                     </div>
                 </section>
 
@@ -247,6 +271,43 @@
                     </div>
                 </section>
 
+                <section id="view-translate" class="view-section">
+                    <div class="panel convert-panel">
+                        <div class="convert-head">
+                            <h3>翻译</h3>
+                            <span class="convert-note">由站内 AI 完成翻译，内容只用于本次结果，不会保存</span>
+                        </div>
+
+                        <div class="trans-langs">
+                            <label>源语言
+                                <select id="trans-from"></select>
+                            </label>
+                            <button type="button" class="trans-swap" onclick="swapTransLang()" title="交换语言" aria-label="交换语言">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h9.2l-2.6-2.6L15 3l5 5-5 5-1.4-1.4L16.2 9H7zm10 10H7.8l2.6 2.6L9 21l-5-5 5-5 1.4 1.4L7.8 15H17z"/></svg>
+                            </button>
+                            <label>目标语言
+                                <select id="trans-to"></select>
+                            </label>
+                        </div>
+
+                        <div class="trans-grid">
+                            <div class="trans-box">
+                                <textarea id="trans-input" rows="8" placeholder="输入要翻译的内容，Ctrl + Enter 也可以直接翻译" oninput="updateTransCount()" onkeydown="transKey(event)"></textarea>
+                                <div class="trans-meta"><span id="trans-count">0 / 4000</span></div>
+                            </div>
+                            <div class="trans-box">
+                                <textarea id="trans-output" rows="8" readonly placeholder="译文会显示在这里"></textarea>
+                                <div class="trans-meta">
+                                    <button type="button" class="ghost small" onclick="copyTrans()">复制译文</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="convert-status" id="trans-status">支持中文、英语、日语、韩语、法语、德语、俄语等常用语言互译。</p>
+                        <p><button type="button" class="primary" id="trans-btn" onclick="runTranslate()">开始翻译</button></p>
+                    </div>
+                </section>
+
                 <section id="view-svc" class="view-section">
                     <div class="frame-wrap">
                         <iframe src="https://svc.rixiangshalu.xyz" title="SVC 语音转换"></iframe>
@@ -257,7 +318,16 @@
                     <div class="panel">
                         <h3>更新日志</h3>
                         <article class="release">
-                            <h2>v1.1.1 <span class="badge badge-new">最新</span></h2>
+                            <h2>v1.1.2 <span class="badge badge-new">最新</span></h2>
+                            <p>2026年11月23日</p>
+                            <ul>
+                                <li><span class="badge badge-new">新增</span>格式转换新增「视频截图」：上传视频后拖动时间轴选一帧，导出原始分辨率的 PNG / JPG，全程本地完成。</li>
+                                <li><span class="badge badge-new">新增</span>左侧工具栏新增「翻译」：支持中文、英语、日语、韩语等 12 种语言互译，可一键交换语言、复制译文。</li>
+                                <li><span class="badge badge-fix">说明</span>翻译由站内 AI 完成，内容只用于本次结果，不会存进聊天记录。</li>
+                            </ul>
+                        </article>
+                        <article class="release">
+                            <h2>v1.1.1</h2>
                             <p>2026年11月23日</p>
                             <ul>
                                 <li><span class="badge badge-new">新增</span>吉祥物可以按住拖到任意位置，拖动左上角圆点可缩放大小。</li>
@@ -494,10 +564,12 @@
             </div>
         </div>
     </div>
-    <script src="script.js?v=1.1.0"></script>
-    <script src="convert.js?v=1.1.0"></script>
-    <script src="docconvert.js?v=1.1.0"></script>
-    <script src="unzip.js?v=1.1.0"></script>
-    <script src="live2d-mascot.js?v=1.1.1"></script>
+    <script src="script.js?v=1.1.2"></script>
+    <script src="convert.js?v=1.1.2"></script>
+    <script src="frame.js?v=1.1.2"></script>
+    <script src="docconvert.js?v=1.1.2"></script>
+    <script src="unzip.js?v=1.1.2"></script>
+    <script src="translate.js?v=1.1.2"></script>
+    <script src="live2d-mascot.js?v=1.1.2"></script>
 </body>
 </html>

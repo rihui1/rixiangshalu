@@ -10,6 +10,7 @@ const HASH_TO_VIEW = {
     convert: 'view-convert',
     docs: 'view-docs',
     unzip: 'view-unzip',
+    translate: 'view-translate',
     svc: 'view-svc',
     changelog: 'view-changelog',
     profile: 'view-profile'
@@ -64,6 +65,7 @@ function switchView(element) {
     if (targetId === 'view-convert' && window.initConvertView) window.initConvertView();
     if (targetId === 'view-docs' && window.initDocsView) window.initDocsView();
     if (targetId === 'view-unzip' && window.initUnzipView) window.initUnzipView();
+    if (targetId === 'view-translate' && window.initTranslateView) window.initTranslateView();
     if (targetId === 'view-home') renderHome();
 }
 
