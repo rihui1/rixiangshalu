@@ -336,21 +336,29 @@ button { cursor: pointer; }
 .unzip-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .unzip-size { color: var(--muted); font-size: 12px; flex-shrink: 0; }
 
-/* 右下角 Live2D 吉祥物 */
+/* 右下角 Live2D 吉祥物：可拖动、可缩放 */
 .l2d-mascot {
-    position: fixed; right: 18px; bottom: 14px; width: 240px; height: 300px;
-    z-index: 8; user-select: none;
+    position: fixed; z-index: 8; user-select: none;
+    touch-action: none; cursor: grab;
 }
+.l2d-mascot.dragging { cursor: grabbing; }
 .l2d-mascot canvas {
-    display: block; width: 100%; height: 100%; cursor: pointer;
+    display: block; width: 100%; height: 100%; cursor: inherit;
     animation: l2d-float 5.5s ease-in-out infinite;
 }
-.l2d-tip {
-    position: absolute; top: 2px; right: 8px; padding: 4px 10px; border-radius: 999px;
-    background: rgba(255, 250, 251, 0.92); border: 1px solid var(--line); color: #a35a76;
-    font-size: 12px; pointer-events: none; opacity: 0.9; transition: opacity 0.5s ease;
+.l2d-resize {
+    position: absolute; left: -7px; top: -7px; width: 22px; height: 22px;
+    border-radius: 50%; background: rgba(255, 250, 251, 0.92); border: 1px solid var(--line);
+    box-shadow: var(--shadow); cursor: nwse-resize; opacity: 0; transition: opacity 0.2s ease;
+    z-index: 2;
 }
-.l2d-tip.gone { opacity: 0; }
+.l2d-resize::before {
+    content: ""; position: absolute; left: 6px; top: 10px; width: 9px; height: 9px;
+    border-left: 2px solid #a35a76; border-bottom: 2px solid #a35a76; border-radius: 1px;
+    transform: rotate(45deg);
+}
+.l2d-mascot:hover .l2d-resize, .l2d-mascot.resizing .l2d-resize { opacity: 1; }
+@media (hover: none) { .l2d-resize { opacity: 0.85; } }
 .l2d-mascot.bounce { animation: l2d-bounce 0.55s ease; }
 @keyframes l2d-float { 50% { transform: translateY(-6px); } }
 @keyframes l2d-bounce {
@@ -358,9 +366,6 @@ button { cursor: pointer; }
     35% { transform: scale(1.06, 0.94); }
     65% { transform: scale(0.97, 1.03); }
     100% { transform: scale(1); }
-}
-@media (max-width: 900px) {
-    .l2d-mascot { width: 150px; height: 190px; right: 8px; bottom: 8px; }
 }
 
 @media (max-width: 900px) {
