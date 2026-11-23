@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>日向论坛</title>
-    <link rel="stylesheet" href="app.css?v=1.0.5">
+    <link rel="stylesheet" href="app.css?v=1.0.6">
 </head>
 <body>
     <div class="scrim" id="scrim" onclick="toggleSidebar()"></div>
@@ -52,7 +52,9 @@
 
         <div class="main">
             <header class="topbar">
-                <button type="button" class="icon-btn" onclick="toggleSidebar()">☰</button>
+                <button type="button" class="icon-btn" onclick="toggleSidebar()" aria-label="切换侧栏">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+                </button>
                 <h1 id="page-title">首页大厅</h1>
                 <div class="user-area" id="user-status-area"></div>
             </header>
@@ -67,10 +69,10 @@
                                 <div class="guest-pill" id="home-guest-tip">游客可以看帖。发帖和用户中心需要登录。</div>
                             </div>
                             <div class="actions">
-                                <button type="button" class="action-card" onclick="openView('view-forum')"><strong>写一条帖子</strong><span></span></button>
-                                <button type="button" class="action-card" onclick="openView('view-ai')"><strong>问问 AI</strong><span> </span></button>
-                                <button type="button" class="action-card" onclick="openView('view-svc')"><strong>SVC 转换</strong><span> </span></button>
-                                <button type="button" class="action-card" onclick="openView('view-changelog')"><strong>看看更新</strong><span> </span></button>
+                                <button type="button" class="action-card" onclick="openView('view-forum')"><strong>写一条帖子</strong><span>记录当下，也看看别人的近况</span></button>
+                                <button type="button" class="action-card" onclick="openView('view-ai')"><strong>问问 AI</strong><span>有问题直接问，记录会保存在服务器</span></button>
+                                <button type="button" class="action-card" onclick="openView('view-svc')"><strong>SVC 转换</strong><span>语音转换工具入口</span></button>
+                                <button type="button" class="action-card" onclick="openView('view-changelog')"><strong>看看更新</strong><span>每个版本改了什么</span></button>
                             </div>
                         </div>
                         <div class="panel">
@@ -95,9 +97,7 @@
                             <span class="quota-pill" id="chat-quota">登录后可保存聊天记录</span>
                             <button type="button" class="ghost small" onclick="clearChatHistory()">清空记录</button>
                         </div>
-                        <div class="chat-log" id="chat-history">
-                            <div class="bubble ai">你好，我是日向的 AI 助手。登录后聊天记录会保存在服务器，下次登录可以接着聊。</div>
-                        </div>
+                        <div class="chat-log" id="chat-history"></div>
                         <div class="chat-bar">
                             <input id="ai-input" type="text" placeholder="输入问题，回车发送" onkeypress="handleKeyPress(event)">
                             <button type="button" class="primary" id="send-btn" onclick="sendToAI()">发送</button>
@@ -115,7 +115,17 @@
                     <div class="panel">
                         <h3>更新日志</h3>
                         <article class="release">
-                            <h2>v1.0.5 <span class="badge badge-new">最新</span></h2>
+                            <h2>v1.0.6 <span class="badge badge-new">最新</span></h2>
+                            <p>2026年11月23日</p>
+                            <ul>
+                                <li><span class="badge badge-fix">清理</span>移除页面里的占位文案与表情符号，首页按钮补上真实说明。</li>
+                                <li><span class="badge badge-fix">优化</span>正文区域加宽并居中，大屏下不再贴着左边。</li>
+                                <li><span class="badge badge-fix">优化</span>聊天页高度按视口自适应，手机端输入框不再被顶出屏幕。</li>
+                                <li><span class="badge badge-fix">优化</span>补齐键盘焦点样式、按钮悬停反馈，移动端间距收紧。</li>
+                            </ul>
+                        </article>
+                        <article class="release">
+                            <h2>v1.0.5</h2>
                             <p>2026年11月22日</p>
                             <ul>
                                 <li><span class="badge badge-new">新增</span>独立超管后台 <code>/admin.html</code>：实时查看在线、用户、发帖与 AI 用量。</li>
@@ -216,7 +226,7 @@
                             </div>
                             <input id="avatar-input" type="file" accept="image/*" hidden onchange="pickAvatar(event)">
                             <div class="profile-head">
-                                <h2 id="profile-username">加载中…</h2>
+                                <h2 id="profile-username">—</h2>
                                 <p class="profile-meta">UID <strong id="profile-uid">—</strong><span class="dot">·</span>加入于 <span id="profile-joined">—</span></p>
                                 <p class="profile-meta">绑定邮箱：<strong id="profile-email">未绑定</strong></p>
                             </div>
@@ -296,6 +306,6 @@
             </div>
         </div>
     </div>
-    <script src="script.js?v=1.0.5"></script>
+    <script src="script.js?v=1.0.6"></script>
 </body>
 </html>

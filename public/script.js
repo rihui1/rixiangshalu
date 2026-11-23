@@ -467,7 +467,7 @@ async function loadChatHistory() {
         if (!res.ok) return;
         history.innerHTML = '';
         if (!data.messages || !data.messages.length) {
-            history.innerHTML = '<div class="bubble ai">你好，我是日向的 AI 助手。有什么想问的直接说吧。</div>';
+            history.innerHTML = '<div class="bubble ai">有什么想聊的，直接说就好。</div>';
         } else {
             data.messages.forEach((m) => appendBubble(m.role, m.content));
         }
