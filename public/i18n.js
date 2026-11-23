@@ -381,6 +381,213 @@
         '首发': { en: 'Release', ja: '初版' }
     };
 
+    /* 更新日志正文 */
+    const LOG_WORDS = {
+        '2026年11月23日': { en: 'Nov 23, 2026', ja: '2026年11月23日' },
+        '2026年11月22日': { en: 'Nov 22, 2026', ja: '2026年11月22日' },
+        '2026年11月5日': { en: 'Nov 5, 2026', ja: '2026年11月5日' },
+        '2026年11月1日': { en: 'Nov 1, 2026', ja: '2026年11月1日' },
+
+        '左上角新增深浅色切换按钮，太阳 / 月亮图标一键切换，选择会记录在本地。': {
+            en: 'Added a light/dark switch in the top left: one click on the sun/moon icon, and your choice is remembered locally.',
+            ja: '左上にライト／ダーク切替ボタンを追加。太陽／月アイコンをワンクリックで切り替えでき、選択はローカルに保存されます。'
+        },
+        '左上角新增语言选择，界面支持中文、日语、英语三种语言互换。': {
+            en: 'Added a language selector in the top left; the interface supports Chinese, Japanese and English.',
+            ja: '左上に言語選択を追加。中国語・日本語・英語の 3 言語に対応しました。'
+        },
+        '语言与主题只影响界面显示，不会改变帖子、聊天记录等已有内容。': {
+            en: 'Language and theme only affect the interface; existing posts and chat history stay unchanged.',
+            ja: '言語とテーマは表示のみに影響し、投稿やチャット履歴などの既存内容は変更されません。'
+        },
+        '格式转换新增「视频截图」：上传视频后拖动时间轴选一帧，导出原始分辨率的 PNG / JPG，全程本地完成。': {
+            en: 'New "Video frame" mode in Convert: upload a video, drag the timeline to pick a frame, and export a PNG / JPG at the original resolution, all locally.',
+            ja: 'フォーマット変換に「動画フレーム」を追加。動画を読み込み、タイムラインでフレームを選んで元の解像度の PNG / JPG を書き出せます（すべてローカル処理）。'
+        },
+        '左侧工具栏新增「翻译」：支持中文、英语、日语、韩语等 12 种语言互译，可一键交换语言、复制译文。': {
+            en: 'New "Translate" tool in the sidebar: translate among 12 languages including Chinese, English, Japanese and Korean, with one-click language swap and copy.',
+            ja: '左側ツールバーに「翻訳」を追加。中国語・英語・日本語・韓国語など 12 言語の相互翻訳に対応し、言語の入れ替えや訳文のコピーもワンクリックで可能です。'
+        },
+        '翻译由站内 AI 完成，内容只用于本次结果，不会存进聊天记录。': {
+            en: 'Translation is handled by the site AI; content is used only for the result and never stored in chat history.',
+            ja: '翻訳はサイト内 AI が行い、内容は今回の結果にのみ使用され、チャット履歴には保存されません。'
+        },
+        '吉祥物可以按住拖到任意位置，拖动左上角圆点可缩放大小。': {
+            en: 'The mascot can be dragged anywhere; drag the dot at its top left to resize it.',
+            ja: 'マスコットは任意の位置にドラッグでき、左上の丸をドラッグしてサイズを変更できます。'
+        },
+        '位置和大小会保存在本地，刷新页面后保持；去掉「点我一下」气泡。': {
+            en: 'Position and size are saved locally and kept after refresh; the "tap me" bubble was removed.',
+            ja: '位置とサイズはローカルに保存され、再読み込み後も維持されます。「タップしてね」の吹き出しは削除しました。'
+        },
+        '拖动超过几个像素算移动，轻点仍然是切换动作，不会误触。': {
+            en: 'Dragging more than a few pixels counts as moving; a light tap still switches actions without misfires.',
+            ja: '数ピクセル以上のドラッグは移動として扱い、軽いタップはこれまで通り動作切替になり、誤操作しません。'
+        },
+        '右下角 Live2D 吉祥物「梅娅」：待机时自己小幅呼吸摆动。': {
+            en: 'New Live2D mascot "Meya" in the bottom right, gently breathing and swaying while idle.',
+            ja: '右下に Live2D マスコット「メイヤ」を追加。待機中は小さく呼吸するように揺れます。'
+        },
+        '点击吉祥物会做幅度更大的动作，并在「眯眼」「生气」两种表情之间切换。': {
+            en: 'Clicking the mascot triggers a bigger motion and switches between "squinting" and "angry" expressions.',
+            ja: 'マスコットをクリックすると大きなモーションを行い、「目を細める」「怒る」の 2 つの表情を切り替えます。'
+        },
+        '全站配色改为与梅娅一致的奶油粉、玫瑰粉与淡紫灰，侧栏改为深梅子色。': {
+            en: 'The whole site now uses cream pink, rose pink and soft lilac gray to match Meya, with a deep plum sidebar.',
+            ja: 'サイト全体の配色をメイヤに合わせたクリームピンク・ローズピンク・淡いライラックグレーに変更し、サイドバーは深いプラム色にしました。'
+        },
+        '「解压工具」：ZIP / JAR / WAR / TAR / TAR.GZ / 7Z / RAR / CAB 本地解压。': {
+            en: 'New "Archives" tool: extract ZIP / JAR / WAR / TAR / TAR.GZ / 7Z / RAR / CAB locally.',
+            ja: '「解凍ツール」を追加。ZIP / JAR / WAR / TAR / TAR.GZ / 7Z / RAR / CAB をローカルで解凍できます。'
+        },
+        '光盘与软件包：ISO / IMG / BIN、APK / IPA / DEB / RPM / XAR 内容浏览与提取。': {
+            en: 'Discs and packages: browse and extract ISO / IMG / BIN and APK / IPA / DEB / RPM / XAR.',
+            ja: 'ディスクとパッケージ：ISO / IMG / BIN、APK / IPA / DEB / RPM / XAR の内容を閲覧・抽出できます。'
+        },
+        '可按文件单独下载，或一键打包成 ZIP 下载；加密压缩包支持填写密码。': {
+            en: 'Download files individually or pack everything into one ZIP; encrypted archives accept a password.',
+            ja: 'ファイルごとのダウンロードや ZIP への一括パッケージにも対応。暗号化された圧縮ファイルはパスワードを入力できます。'
+        },
+        '解压引擎为本地 WebAssembly，文件不上传；磁盘镜像（VMDK / VHD / QCOW2 / DMG 等）浏览器无法解析。': {
+            en: 'Extraction runs on a local WebAssembly engine and files are never uploaded; browsers cannot parse disk images (VMDK / VHD / QCOW2 / DMG, etc.).',
+            ja: '解凍エンジンはローカルの WebAssembly で、ファイルはアップロードされません。ディスクイメージ（VMDK / VHD / QCOW2 / DMG など）はブラウザでは解析できません。'
+        },
+        '「文档转换」工具：图片转 PDF、PDF 转图片（PNG / JPG / WEBP）、文档转 PDF、PDF 提取文字。': {
+            en: 'New "Documents" tool: images to PDF, PDF to images (PNG / JPG / WEBP), documents to PDF, and PDF text extraction.',
+            ja: '「ドキュメント変換」ツールを追加。画像→PDF、PDF→画像（PNG / JPG / WEBP）、文書→PDF、PDF のテキスト抽出に対応。'
+        },
+        '图片格式互转：PNG / JPG / JPEG / WEBP，可调质量，支持批量。': {
+            en: 'Image format conversion: PNG / JPG / JPEG / WEBP with adjustable quality and batch support.',
+            ja: '画像形式の相互変換：PNG / JPG / JPEG / WEBP。品質調整と一括処理に対応。'
+        },
+        '全站反爬虫策略：robots.txt、常见采集与 AI 爬虫 UA 拦截、接口频率限制。': {
+            en: 'Site-wide anti-scraping: robots.txt, UA blocking for common crawlers and AI bots, and API rate limits.',
+            ja: 'サイト全体のクローラー対策：robots.txt、一般的な収集ボットと AI クローラーの UA ブロック、API のレート制限。'
+        },
+        '左侧工具栏加入「格式转换」：视频提取音频，支持 MP3 / WAV / FLAC / OGG / M4A / AAC / OPUS。': {
+            en: 'Added "Convert" to the sidebar: extract audio from video in MP3 / WAV / FLAC / OGG / M4A / AAC / OPUS.',
+            ja: '左側ツールバーに「フォーマット変換」を追加。動画から MP3 / WAV / FLAC / OGG / M4A / AAC / OPUS の音声を抽出できます。'
+        },
+        '视频互转 MP4 / MOV / WEBM / MKV / AVI，以及 GIF 动图导出。': {
+            en: 'Convert between MP4 / MOV / WEBM / MKV / AVI, plus GIF export.',
+            ja: 'MP4 / MOV / WEBM / MKV / AVI の相互変換と GIF 書き出しに対応。'
+        },
+        '转换全部在浏览器本地完成，文件不上传服务器；首次使用加载约 32MB 引擎。': {
+            en: 'All conversion runs locally in the browser and files are never uploaded; the first use loads a ~32MB engine.',
+            ja: '変換はすべてブラウザ内で行われ、ファイルはアップロードされません。初回は約 32MB のエンジンを読み込みます。'
+        },
+        '移除页面里的占位文案与表情符号，首页按钮补上真实说明。': {
+            en: 'Removed placeholder copy and emoji, and gave the home buttons real descriptions.',
+            ja: 'ページ内の仮テキストと絵文字を削除し、ホームのボタンに実際の説明を追加しました。'
+        },
+        '正文区域加宽并居中，大屏下不再贴着左边。': {
+            en: 'Widened and centered the main area so it no longer sticks to the left on large screens.',
+            ja: '本文エリアを広げて中央寄せにし、大画面でも左に寄らなくなりました。'
+        },
+        '聊天页高度按视口自适应，手机端输入框不再被顶出屏幕。': {
+            en: 'The chat page now adapts to the viewport height, so the input stays on screen on mobile.',
+            ja: 'チャットページの高さを画面に合わせ、スマホでも入力欄が画面外に出なくなりました。'
+        },
+        '补齐键盘焦点样式、按钮悬停反馈，移动端间距收紧。': {
+            en: 'Improved keyboard focus styles and button hover feedback, and tightened spacing on mobile.',
+            ja: 'キーボードフォーカスの表示とボタンのホバー反応を補い、モバイルの余白を詰めました。'
+        },
+        '独立超管后台': { en: 'Dedicated admin dashboard', ja: '専用の管理画面' },
+        '：实时查看在线、用户、发帖与 AI 用量。': {
+            en: ': live stats for online users, accounts, posts and AI usage.',
+            ja: '：オンライン・アカウント・投稿・AI 利用状況をリアルタイムで確認。'
+        },
+        '超管可单独给某个账号下发额外 AI 额度。': {
+            en: 'Admins can grant extra AI quota to individual accounts.',
+            ja: '管理者は特定のアカウントに追加の AI 利用枠を付与できます。'
+        },
+        '超管可封禁 / 解封 / 删除账号，隐藏 / 删除帖子。': {
+            en: 'Admins can ban / unban / delete accounts and hide / delete posts.',
+            ja: '管理者はアカウントの禁止・解除・削除、投稿の非表示・削除ができます。'
+        },
+        '超管登录失败限流、操作日志，令牌 2 小时自动过期。': {
+            en: 'Admin login rate limiting, operation logs, and tokens that expire after 2 hours.',
+            ja: '管理者ログインの試行制限、操作ログ、2 時間で失効するトークン。'
+        },
+        '更新日志版本号统一从 v1.0.0 起顺序递增。': {
+            en: 'Changelog version numbers now increment in order from v1.0.0.',
+            ja: '更新履歴のバージョン番号を v1.0.0 から順番に統一しました。'
+        },
+        '未登录时右上角缺少头像圆圈。': {
+            en: 'Fixed the missing avatar circle in the top right when logged out.',
+            ja: '未ログイン時に右上のアバター丸が表示されない問題を修正。'
+        },
+        '验证码发送失败时提示更明确，并补充服务端日志。': {
+            en: 'Clearer messages when sending a code fails, plus server-side logs.',
+            ja: '認証コード送信失敗時のメッセージを明確にし、サーバーログを追加。'
+        },
+        '静态资源加版本号，避免浏览器/CDN 缓存旧脚本导致按钮失效。': {
+            en: 'Added version numbers to static assets to prevent stale cached scripts from breaking buttons.',
+            ja: '静的リソースにバージョンを付与し、ブラウザ/CDN の古いキャッシュでボタンが動かなくなるのを防止。'
+        },
+        'AI 聊天记录保存到服务器，换设备登录也能接着聊。': {
+            en: 'AI chat history is saved on the server, so you can continue on another device.',
+            ja: 'AI チャット履歴をサーバーに保存し、別の端末でも続きから話せます。'
+        },
+        '每位用户每天 50 条 AI 额度，用完次日 0 点恢复。': {
+            en: 'Each user gets 50 AI messages per day, reset at midnight.',
+            ja: '各ユーザーは 1 日 50 件の AI 利用枠。使い切ると翌日 0 時に回復します。'
+        },
+        '用户中心重做：生日、邮箱换绑、修改密码、用量统计。': {
+            en: 'Reworked the profile: birthday, email change, password change and usage stats.',
+            ja: 'ユーザーセンターを刷新：誕生日、メール変更、パスワード変更、利用統計。'
+        },
+        '验证码发送失败时给出具体提示，并限制发送频率。': {
+            en: 'Specific messages when code sending fails, with send-rate limiting.',
+            ja: '認証コード送信失敗時に具体的な案内を表示し、送信頻度を制限。'
+        },
+        '去掉更新日志里的「返回登录」，避免页面里再套一层网站。': {
+            en: 'Removed "back to login" from the changelog to avoid nesting one site inside another.',
+            ja: '更新履歴内の「ログインに戻る」を削除し、ページ内にサイトが入れ子になるのを防止。'
+        },
+        '论坛、AI、SVC、日志、用户中心都在左侧栏内切换。': {
+            en: 'Forum, AI, SVC, changelog and profile all switch within the sidebar.',
+            ja: '掲示板・AI・SVC・更新履歴・ユーザーセンターを左サイドバー内で切り替え。'
+        },
+        '老账号 UID 显示「未分配」。': {
+            en: 'Fixed old accounts showing "unassigned" for UID.',
+            ja: '古いアカウントの UID が「未割り当て」と表示される問題を修正。'
+        },
+        '用户可以注销自己的账号。': {
+            en: 'Users can delete their own accounts.',
+            ja: 'ユーザーが自分のアカウントを削除できるようになりました。'
+        },
+        '邮箱验证码注册与登录。': {
+            en: 'Email verification code registration and login.',
+            ja: 'メール認証コードによる登録とログイン。'
+        },
+        '独立的注册页面。': {
+            en: 'A standalone registration page.',
+            ja: '独立した登録ページ。'
+        },
+        '数据库缺少 email 字段导致的 500 错误。': {
+            en: 'Fixed 500 errors caused by the missing email column in the database.',
+            ja: 'データベースに email 列がなく 500 エラーになる問題を修正。'
+        },
+        '用户名密码注册与登录。': {
+            en: 'Username and password registration and login.',
+            ja: 'ユーザー名とパスワードによる登録とログイン。'
+        },
+        '发帖和帖子列表。': {
+            en: 'Posting and post lists.',
+            ja: '投稿と投稿一覧。'
+        },
+        '更新日志正文支持多语言：日期与历次版本说明会跟随中文 / 日语 / 英语一起切换。': {
+            en: 'Changelog content now supports multiple languages: dates and past entries follow Chinese / Japanese / English.',
+            ja: '更新履歴の本文が多言語対応に。日付と過去の各バージョン説明も中国語 / 日本語 / 英語に追随します。'
+        },
+        '公告类内容按当前界面语言显示，切换语言后无需刷新页面。': {
+            en: 'Announcement content follows the current interface language and updates without refreshing.',
+            ja: 'お知らせ内容は現在の表示言語に合わせて切り替わり、再読み込みは不要です。'
+        }
+    };
+    Object.assign(WORDS, LOG_WORDS);
+
     /* 带变量的句子：用正则匹配后再翻译 */
     const PATTERNS = [
         {
