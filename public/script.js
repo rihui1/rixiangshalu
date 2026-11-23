@@ -9,6 +9,7 @@ const HASH_TO_VIEW = {
     ai: 'view-ai',
     convert: 'view-convert',
     docs: 'view-docs',
+    unzip: 'view-unzip',
     svc: 'view-svc',
     changelog: 'view-changelog',
     profile: 'view-profile'
@@ -62,6 +63,7 @@ function switchView(element) {
     if (targetId === 'view-ai') loadChatHistory();
     if (targetId === 'view-convert' && window.initConvertView) window.initConvertView();
     if (targetId === 'view-docs' && window.initDocsView) window.initDocsView();
+    if (targetId === 'view-unzip' && window.initUnzipView) window.initUnzipView();
     if (targetId === 'view-home') renderHome();
 }
 
