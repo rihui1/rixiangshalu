@@ -24,9 +24,10 @@ function escapeHtml(str) {
 
 function greeting() {
     const hour = new Date().getHours();
-    const name = currentUser || '旅人';
-    const hello = hour < 5 ? '夜深了' : hour < 11 ? '早上好' : hour < 14 ? '中午好' : hour < 18 ? '下午好' : '晚上好';
-    return hello + '，' + name;
+    const name = currentUser || tr('旅人');
+    const helloKey = hour < 5 ? '夜深了' : hour < 11 ? '早上好' : hour < 14 ? '中午好' : hour < 18 ? '下午好' : '晚上好';
+    const sep = (window.getLang && window.getLang() === 'en') ? ', ' : '，';
+    return tr(helloKey) + sep + name;
 }
 
 function toggleSidebar() {
@@ -53,7 +54,9 @@ function switchView(element) {
     const view = document.getElementById(targetId);
     if (view) view.classList.add('active');
     const label = element.querySelector('.nav-text');
-    document.getElementById('page-title').textContent = label ? label.textContent : '日向论坛';
+    const zhLabel = window.zhTextOf ? window.zhTextOf(label) : (label ? label.textContent : '');
+    if (window.setPageTitle) window.setPageTitle(zhLabel || '首页大厅');
+    else document.getElementById('page-title').textContent = label ? label.textContent : '日向论坛';
     const hash = Object.keys(HASH_TO_VIEW).find((key) => HASH_TO_VIEW[key] === targetId) || 'home';
     history.replaceState(null, '', '#' + hash);
     if (window.matchMedia('(max-width: 900px)').matches) {
@@ -76,11 +79,11 @@ function initUserState() {
     document.getElementById('greet').textContent = greeting();
     if (!(token && currentUser)) {
         area.innerHTML =
-            '<span class="user-name guest-name">未登录</span>' +
-            '<button type="button" class="avatar" title="登录 / 注册" onclick="openView(\'view-profile\')">' +
+            '<span class="user-name guest-name">' + tr('未登录') + '</span>' +
+            '<button type="button" class="avatar" title="' + tr('登录 / 注册') + '" onclick="openView(\'view-profile\')">' +
             '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z"/></svg>' +
             '</button>' +
-            '<button type="button" class="text-btn" onclick="openView(\'view-profile\')">登录</button>';
+            '<button type="button" class="text-btn" onclick="openView(\'view-profile\')">' + tr('登录') + '</button>';
         return;
     }
     const savedAvatar = localStorage.getItem('user_avatar') || '';
@@ -89,8 +92,8 @@ function initUserState() {
         : '<span>' + escapeHtml(currentUser.charAt(0).toUpperCase()) + '</span>';
     area.innerHTML =
         '<span class="user-name">' + escapeHtml(currentUser) + '</span>' +
-        '<button type="button" class="avatar" title="用户中心" onclick="openView(\'view-profile\')">' + face + '</button>' +
-        '<button type="button" class="ghost" onclick="logout()">退出</button>';
+        '<button type="button" class="avatar" title="' + tr('用户中心') + '" onclick="openView(\'view-profile\')">' + face + '</button>' +
+        '<button type="button" class="ghost" onclick="logout()">' + tr('退出') + '</button>';
 }
 
 function logout() {
@@ -134,7 +137,7 @@ function startCountdown(btn, label) {
     btn.disabled = true;
     const timer = setInterval(() => {
         left -= 1;
-        btn.textContent = left + '秒';
+        btn.textContent = tr(left + '秒');
         if (left <= 0) {
             clearInterval(timer);
             btn.disabled = false;
@@ -448,6 +451,7 @@ function appendBubble(role, text) {
 
 function updateQuota(quota) {
     if (!quota) return;
+    window.__lastQuota = quota;
     const used = quota.used || 0;
     const limit = quota.limit || 0;
     document.getElementById('chat-used').textContent = used;
@@ -456,7 +460,7 @@ function updateQuota(quota) {
     const fill = document.getElementById('quota-fill');
     if (fill) fill.style.width = (limit ? Math.min(100, (used / limit) * 100) : 0) + '%';
     const pill = document.getElementById('chat-quota');
-    if (pill) pill.textContent = token ? '今日剩余 ' + quota.remaining + ' 条' : '登录后可保存聊天记录';
+    if (pill) pill.textContent = token ? tr('今日剩余 ' + quota.remaining + ' 条') : tr('登录后可保存聊天记录');
 }
 
 async function loadChatHistory() {
@@ -545,6 +549,18 @@ function applyHash() {
     const key = (location.hash || '#home').slice(1);
     openView(HASH_TO_VIEW[key] || 'view-home');
 }
+
+window.refreshDynamicLang = function () {
+    initUserState();
+    const greet = document.getElementById('greet');
+    if (greet) greet.textContent = greeting();
+    const pill = document.getElementById('chat-quota');
+    if (pill) {
+        pill.textContent = (token && window.__lastQuota)
+            ? tr('今日剩余 ' + window.__lastQuota.remaining + ' 条')
+            : tr('登录后可保存聊天记录');
+    }
+};
 
 initUserState();
 syncProfileVisibility();
