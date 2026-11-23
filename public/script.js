@@ -11,6 +11,10 @@ const HASH_TO_VIEW = {
     docs: 'view-docs',
     unzip: 'view-unzip',
     translate: 'view-translate',
+    todos: 'view-todos',
+    imghost: 'view-imghost',
+    short: 'view-short',
+    notes: 'view-notes',
     svc: 'view-svc',
     changelog: 'view-changelog',
     profile: 'view-profile'
@@ -69,6 +73,10 @@ function switchView(element) {
     if (targetId === 'view-docs' && window.initDocsView) window.initDocsView();
     if (targetId === 'view-unzip' && window.initUnzipView) window.initUnzipView();
     if (targetId === 'view-translate' && window.initTranslateView) window.initTranslateView();
+    if (targetId === 'view-todos' && window.initTodoView) window.initTodoView();
+    if (targetId === 'view-imghost' && window.initImgHostView) window.initImgHostView();
+    if (targetId === 'view-short' && window.initShortView) window.initShortView();
+    if (targetId === 'view-notes' && window.initNotesView) window.initNotesView();
     if (targetId === 'view-home') renderHome();
 }
 

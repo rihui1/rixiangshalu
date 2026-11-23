@@ -5,6 +5,9 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const OpenAI = require('openai');
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
 
 const app = express();
 // 必须调大限制，否则 Base64 头像传不上去
@@ -77,6 +80,11 @@ app.use(['/admin.html', '/api'], (req, res, next) => {
 
 app.use(express.static('public'));
 
+// 图床：用户上传的图片放在项目下的 uploads 目录，通过 /uploads 访问
+const UPLOAD_DIR = path.join(__dirname, 'uploads');
+fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '7d', immutable: true, index: false }));
+
 // 复制粘贴时容易带上空格或换行，这里统一去掉首尾空白
 const EMAIL_USER = String(process.env.EMAIL_USER || '').trim();
 const EMAIL_PASS = String(process.env.EMAIL_PASS || '').replace(/\s/g, '');
@@ -145,6 +153,41 @@ db.exec(`
         detail TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS todos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        content TEXT NOT NULL,
+        done INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_todos_user ON todos (user_id, id);
+    CREATE TABLE IF NOT EXISTS notes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        title TEXT DEFAULT '',
+        content TEXT DEFAULT '',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_notes_user ON notes (user_id, id);
+    CREATE TABLE IF NOT EXISTS short_links (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT UNIQUE,
+        url TEXT NOT NULL,
+        user_id INTEGER,
+        hits INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_short_user ON short_links (user_id, id);
+    CREATE TABLE IF NOT EXISTS uploads (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        filename TEXT NOT NULL,
+        original TEXT,
+        size INTEGER,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_uploads_user ON uploads (user_id, id);
 `);
 
 // 2. 为了防止旧数据库报错，尝试动态添加字段（如果已存在会报错，直接忽略）
@@ -597,6 +640,311 @@ app.post('/api/translate', async (req, res) => {
     } catch (error) {
         console.error('翻译调用失败：', error.message);
         res.status(502).json({ error: '翻译服务暂时不可用，请稍后再试' });
+    }
+});
+
+// ================= 待办清单 =================
+const TODO_MAX = 200;
+
+app.get('/api/todos', (req, res) => {
+    const auth = readUser(req);
+    if (auth.error) return res.status(auth.status).json({ error: auth.error });
+    const todos = db.prepare(
+        'SELECT id, content, done, created_at FROM todos WHERE user_id = ? ORDER BY done ASC, id DESC'
+    ).all(auth.user.id);
+    res.json({ todos });
+});
+
+app.post('/api/todos', (req, res) => {
+    const auth = readUser(req);
+    if (auth.error) return res.status(auth.status).json({ error: auth.error });
+    const content = String((req.body && req.body.content) || '').trim();
+    if (!content) return res.status(400).json({ error: '待办内容不能为空' });
+    if (content.length > 200) return res.status(400).json({ error: '待办内容请控制在 200 字以内' });
+    const total = db.prepare('SELECT COUNT(*) AS n FROM todos WHERE user_id = ?').get(auth.user.id).n;
+    if (total >= TODO_MAX) return res.status(400).json({ error: '待办数量已达上限，先清理一些再添加' });
+    const info = db.prepare(
+        "INSERT INTO todos (user_id, content, created_at) VALUES (?, ?, datetime('now', 'localtime'))"
+    ).run(auth.user.id, content);
+    const todo = db.prepare('SELECT id, content, done, created_at FROM todos WHERE id = ?').get(info.lastInsertRowid);
+    res.json({ todo });
+});
+
+app.patch('/api/todos/:id', (req, res) => {
+    const auth = readUser(req);
+    if (auth.error) return res.status(auth.status).json({ error: auth.error });
+    const id = Number(req.params.id);
+    const todo = db.prepare('SELECT id FROM todos WHERE id = ? AND user_id = ?').get(id, auth.user.id);
+    if (!todo) return res.status(404).json({ error: '待办不存在' });
+    const body = req.body || {};
+    if (body.done !== undefined) {
+        db.prepare('UPDATE todos SET done = ? WHERE id = ?').run(body.done ? 1 : 0, id);
+    }
+    if (body.content !== undefined) {
+        const content = String(body.content).trim();
+        if (!content) return res.status(400).json({ error: '待办内容不能为空' });
+        db.prepare('UPDATE todos SET content = ? WHERE id = ?').run(content.slice(0, 200), id);
+    }
+    res.json({ message: '已更新' });
+});
+
+// 清除全部已完成的待办（必须放在 /:id 之前）
+app.delete('/api/todos/done', (req, res) => {
+    const auth = readUser(req);
+    if (auth.error) return res.status(auth.status).json({ error: auth.error });
+    const info = db.prepare('DELETE FROM todos WHERE user_id = ? AND done = 1').run(auth.user.id);
+    res.json({ message: '已清除', removed: info.changes });
+});
+
+app.delete('/api/todos/:id', (req, res) => {
+    const auth = readUser(req);
+    if (auth.error) return res.status(auth.status).json({ error: auth.error });
+    const info = db.prepare('DELETE FROM todos WHERE id = ? AND user_id = ?').run(Number(req.params.id), auth.user.id);
+    if (!info.changes) return res.status(404).json({ error: '待办不存在' });
+    res.json({ message: '已删除' });
+});
+
+// ================= 极简图床 =================
+const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+const IMAGE_DAILY_LIMIT = 60;
+const IMAGE_MAX_BYTES = 8 * 1024 * 1024;
+
+// 只认文件头，避免把改扩展名的其它文件写进上传目录
+function imageExt(buf) {
+    if (buf.length > 8 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) return 'png';
+    if (buf.length > 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'jpg';
+    if (buf.length > 12 && buf.slice(0, 4).toString('latin1') === 'RIFF' && buf.slice(8, 12).toString('latin1') === 'WEBP') return 'webp';
+    if (buf.length > 6 && buf.slice(0, 3).toString('latin1') === 'GIF') return 'gif';
+    return '';
+}
+
+app.post('/api/images', express.raw({ type: IMAGE_TYPES, limit: '10mb' }), (req, res) => {
+    const auth = readUser(req);
+    if (auth.error) return res.status(auth.status).json({ error: auth.error });
+
+    const buf = req.body;
+    if (!Buffer.isBuffer(buf) || !buf.length) {
+        return res.status(400).json({ error: '请选择 PNG / JPG / WEBP / GIF 图片' });
+    }
+    if (buf.length > IMAGE_MAX_BYTES) {
+        return res.status(413).json({ error: '图片不能超过 8MB' });
+    }
+    const usedToday = db.prepare(
+        "SELECT COUNT(*) AS n FROM uploads WHERE user_id = ? AND date(created_at) = date('now', 'localtime')"
+    ).get(auth.user.id).n;
+    if (usedToday >= IMAGE_DAILY_LIMIT) {
+        return res.status(429).json({ error: '今天的上传次数已用完，明天再来吧' });
+    }
+    const ext = imageExt(buf);
+    if (!ext) return res.status(400).json({ error: '这个文件不是有效的图片' });
+
+    const filename = Date.now().toString(36) + crypto.randomBytes(4).toString('hex') + '.' + ext;
+    try {
+        fs.writeFileSync(path.join(UPLOAD_DIR, filename), buf);
+        db.prepare('INSERT INTO uploads (user_id, filename, original, size) VALUES (?, ?, ?, ?)')
+            .run(auth.user.id, filename, String((req.query.name || '').slice(0, 120)), buf.length);
+        res.json({ url: '/uploads/' + filename, name: filename, size: buf.length });
+    } catch (e) {
+        console.error('图片保存失败：', e.message);
+        res.status(500).json({ error: '图片保存失败，请稍后再试' });
+    }
+});
+
+app.get('/api/images', (req, res) => {
+    const auth = readUser(req);
+    if (auth.error) return res.status(auth.status).json({ error: auth.error });
+    const images = db.prepare(
+        'SELECT id, filename, original, size, created_at FROM uploads WHERE user_id = ? ORDER BY id DESC LIMIT 60'
+    ).all(auth.user.id).map((row) => ({
+        id: row.id,
+        url: '/uploads/' + row.filename,
+        name: row.original || row.filename,
+        size: row.size,
+        created_at: row.created_at
+    }));
+    const usedToday = db.prepare(
+        "SELECT COUNT(*) AS n FROM uploads WHERE user_id = ? AND date(created_at) = date('now', 'localtime')"
+    ).get(auth.user.id).n;
+    res.json({ images, usedToday, limit: IMAGE_DAILY_LIMIT });
+});
+
+app.delete('/api/images/:id', (req, res) => {
+    const auth = readUser(req);
+    if (auth.error) return res.status(auth.status).json({ error: auth.error });
+    const row = db.prepare('SELECT id, filename FROM uploads WHERE id = ? AND user_id = ?')
+        .get(Number(req.params.id), auth.user.id);
+    if (!row) return res.status(404).json({ error: '图片不存在' });
+    try { fs.unlinkSync(path.join(UPLOAD_DIR, row.filename)); } catch (e) { /* 文件已不在也继续删记录 */ }
+    db.prepare('DELETE FROM uploads WHERE id = ?').run(row.id);
+    res.json({ message: '已删除' });
+});
+
+// ================= 短链接 =================
+const SHORT_ALPHABET = '23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ';
+const SHORT_MAX_PER_USER = 300;
+
+function makeShortCode() {
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+        let code = '';
+        for (let i = 0; i < 6; i += 1) code += SHORT_ALPHABET[crypto.randomInt(0, SHORT_ALPHABET.length)];
+        if (!db.prepare('SELECT 1 FROM short_links WHERE code = ?').get(code)) return code;
+    }
+    return '';
+}
+
+function normalizeShortUrl(raw) {
+    let value = String(raw || '').trim();
+    if (!value) return { error: '请填写要缩短的链接' };
+    if (value.length > 2048) return { error: '链接太长了，请控制在 2048 个字符以内' };
+    if (!/^https?:\/\//i.test(value)) value = 'https://' + value;
+    let parsed;
+    try { parsed = new URL(value); } catch (e) { return { error: '链接格式不正确' }; }
+    if (!/^https?:$/.test(parsed.protocol)) return { error: '只支持 http / https 链接' };
+    const host = parsed.hostname.toLowerCase();
+    if (host === 'localhost' || host === '0.0.0.0' || host === '::1' ||
+        /^127\./.test(host) || /^10\./.test(host) || /^192\.168\./.test(host) ||
+        /^172\.(1[6-9]|2\d|3[01])\./.test(host) || /\.local$/.test(host)) {
+        return { error: '不能缩短内网地址' };
+    }
+    return { url: parsed.href };
+}
+
+app.post('/api/shorten', (req, res) => {
+    const auth = readUser(req);
+    if (auth.error) return res.status(auth.status).json({ error: auth.error });
+    const checked = normalizeShortUrl(req.body && req.body.url);
+    if (checked.error) return res.status(400).json({ error: checked.error });
+    const total = db.prepare('SELECT COUNT(*) AS n FROM short_links WHERE user_id = ?').get(auth.user.id).n;
+    if (total >= SHORT_MAX_PER_USER) {
+        return res.status(400).json({ error: '短链接数量已达上限，先删除一些再生成' });
+    }
+    const code = makeShortCode();
+    if (!code) return res.status(500).json({ error: '生成短码失败，请重试' });
+    db.prepare('INSERT INTO short_links (code, url, user_id) VALUES (?, ?, ?)').run(code, checked.url, auth.user.id);
+    res.json({ code, url: checked.url, short: '/s/' + code });
+});
+
+app.get('/api/shorten', (req, res) => {
+    const auth = readUser(req);
+    if (auth.error) return res.status(auth.status).json({ error: auth.error });
+    const links = db.prepare(
+        'SELECT id, code, url, hits, created_at FROM short_links WHERE user_id = ? ORDER BY id DESC LIMIT 100'
+    ).all(auth.user.id).map((row) => ({ ...row, short: '/s/' + row.code }));
+    res.json({ links });
+});
+
+app.delete('/api/shorten/:id', (req, res) => {
+    const auth = readUser(req);
+    if (auth.error) return res.status(auth.status).json({ error: auth.error });
+    const info = db.prepare('DELETE FROM short_links WHERE id = ? AND user_id = ?')
+        .run(Number(req.params.id), auth.user.id);
+    if (!info.changes) return res.status(404).json({ error: '短链接不存在' });
+    res.json({ message: '已删除' });
+});
+
+// 短链接跳转（公开访问）
+app.get('/s/:code', (req, res) => {
+    const code = String(req.params.code || '');
+    if (!/^[0-9A-Za-z]{4,12}$/.test(code)) return res.status(404).type('text/plain').send('404 Not Found');
+    const row = db.prepare('SELECT id, url FROM short_links WHERE code = ?').get(code);
+    if (!row) return res.status(404).type('text/plain').send('短链接不存在或已被删除');
+    db.prepare('UPDATE short_links SET hits = COALESCE(hits, 0) + 1 WHERE id = ?').run(row.id);
+    res.redirect(302, row.url);
+});
+
+// ================= Markdown 笔记 =================
+const NOTE_MAX_CHARS = 100000;
+const POLISH_LIMIT = 15;
+const polishHits = new Map();
+
+function noteFields(body) {
+    const title = String((body && body.title) || '').trim().slice(0, 120);
+    const content = String((body && body.content) || '');
+    return { title, content };
+}
+
+app.get('/api/notes', (req, res) => {
+    const auth = readUser(req);
+    if (auth.error) return res.status(auth.status).json({ error: auth.error });
+    const notes = db.prepare(
+        'SELECT id, title, content, created_at, updated_at FROM notes WHERE user_id = ? ORDER BY updated_at DESC, id DESC LIMIT 100'
+    ).all(auth.user.id);
+    res.json({ notes });
+});
+
+app.post('/api/notes', (req, res) => {
+    const auth = readUser(req);
+    if (auth.error) return res.status(auth.status).json({ error: auth.error });
+    const { title, content } = noteFields(req.body);
+    if (content.length > NOTE_MAX_CHARS) return res.status(400).json({ error: '笔记太长了，请拆分成多篇' });
+    const info = db.prepare(
+        "INSERT INTO notes (user_id, title, content, created_at, updated_at) VALUES (?, ?, ?, datetime('now', 'localtime'), datetime('now', 'localtime'))"
+    ).run(auth.user.id, title || '未命名笔记', content);
+    const note = db.prepare('SELECT * FROM notes WHERE id = ?').get(info.lastInsertRowid);
+    res.json({ note });
+});
+
+app.put('/api/notes/:id', (req, res) => {
+    const auth = readUser(req);
+    if (auth.error) return res.status(auth.status).json({ error: auth.error });
+    const id = Number(req.params.id);
+    const note = db.prepare('SELECT id FROM notes WHERE id = ? AND user_id = ?').get(id, auth.user.id);
+    if (!note) return res.status(404).json({ error: '笔记不存在' });
+    const { title, content } = noteFields(req.body);
+    if (content.length > NOTE_MAX_CHARS) return res.status(400).json({ error: '笔记太长了，请拆分成多篇' });
+    db.prepare(
+        "UPDATE notes SET title = ?, content = ?, updated_at = datetime('now', 'localtime') WHERE id = ?"
+    ).run(title || '未命名笔记', content, id);
+    res.json({ message: '已保存' });
+});
+
+app.delete('/api/notes/:id', (req, res) => {
+    const auth = readUser(req);
+    if (auth.error) return res.status(auth.status).json({ error: auth.error });
+    const info = db.prepare('DELETE FROM notes WHERE id = ? AND user_id = ?').run(Number(req.params.id), auth.user.id);
+    if (!info.changes) return res.status(404).json({ error: '笔记不存在' });
+    res.json({ message: '已删除' });
+});
+
+// AI 润色笔记：同一 IP 每分钟最多 15 次
+app.post('/api/notes/polish', async (req, res) => {
+    const auth = readUser(req);
+    if (auth.error) return res.status(auth.status).json({ error: auth.error });
+
+    const ip = req.ip || 'unknown';
+    const now = Date.now();
+    let rec = polishHits.get(ip);
+    if (!rec || now - rec.start >= 60000) rec = { start: now, count: 0 };
+    rec.count += 1;
+    polishHits.set(ip, rec);
+    if (polishHits.size > 5000) {
+        polishHits.forEach((v, k) => { if (now - v.start >= 60000) polishHits.delete(k); });
+    }
+    if (rec.count > POLISH_LIMIT) return res.status(429).json({ error: '润色太频繁了，休息一下再试' });
+
+    const text = String((req.body && req.body.text) || '').trim();
+    if (!text) return res.status(400).json({ error: '内容不能为空' });
+    if (text.length > 8000) return res.status(400).json({ error: '内容太长，请控制在 8000 字以内' });
+
+    try {
+        const response = await openai.chat.completions.create({
+            model: CHAT_MODEL,
+            temperature: 0.4,
+            messages: [
+                {
+                    role: 'system',
+                    content: '你是中文写作助手。请在保持原意和 Markdown 结构的前提下润色用户提供的笔记：修正错别字与语病，让表达更清晰、通顺、有条理。只输出润色后的完整内容，不要解释、不要加代码围栏。'
+                },
+                { role: 'user', content: text }
+            ]
+        });
+        const out = String((response.choices && response.choices[0] && response.choices[0].message &&
+            response.choices[0].message.content) || '').trim();
+        if (!out) return res.status(502).json({ error: '润色没有返回内容，请稍后再试' });
+        res.json({ text: out });
+    } catch (error) {
+        console.error('笔记润色失败：', error.message);
+        res.status(502).json({ error: 'AI 暂时不可用，请稍后再试' });
     }
 });
 

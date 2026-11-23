@@ -588,6 +588,134 @@
     };
     Object.assign(WORDS, LOG_WORDS);
 
+    /* ---------------- 效率工具：待办 / 图床 / 短链接 / Markdown 笔记 ---------------- */
+    const TOOL_WORDS = {
+        '效率': { en: 'Productivity', ja: '効率化' },
+        '待办清单': { en: 'To-do list', ja: 'やることリスト' },
+        '图床': { en: 'Image host', ja: '画像ホスト' },
+        '短链接': { en: 'Short links', ja: '短縮リンク' },
+        'Markdown 笔记': { en: 'Markdown notes', ja: 'Markdown ノート' },
+
+        /* 待办 */
+        '登录后同步到云端，换设备也能接着用': {
+            en: 'Synced to the cloud after login, so you can continue on any device',
+            ja: 'ログインするとクラウドに同期され、別の端末でも続けられます'
+        },
+        '添加一条待办，回车即可保存': { en: 'Add a to-do and press Enter to save', ja: 'やることを入力して Enter で保存' },
+        '添加': { en: 'Add', ja: '追加' },
+        '清除已完成': { en: 'Clear completed', ja: '完了済みを消去' },
+        '未登录时待办只保存在这台设备；登录后会保存到云端。': {
+            en: 'When logged out, to-dos are saved only on this device; log in to sync them to the cloud.',
+            ja: '未ログインの場合、やることはこの端末にのみ保存されます。ログインするとクラウドに保存されます。'
+        },
+        '还没有待办，先加一条吧。': { en: 'No to-dos yet. Add your first one.', ja: 'まだやることがありません。最初の 1 件を追加しましょう。' },
+        '还没有已完成的待办。': { en: 'No completed to-dos yet.', ja: '完了したやることはまだありません。' },
+        '先写点要做什么。': { en: 'Write something to do first.', ja: 'まずやることを入力してください。' },
+        '已保存在本机，登录后会改为云端同步。': {
+            en: 'Saved on this device. Log in to switch to cloud sync.',
+            ja: 'この端末に保存しました。ログインするとクラウド同期に切り替わります。'
+        },
+        '已添加。': { en: 'Added.', ja: '追加しました。' },
+        '正在同步云端待办…': { en: 'Syncing to-dos from the cloud...', ja: 'クラウドのやることリストを同期中...' },
+        '状态同步失败，刷新后可能不一致。': { en: 'Failed to sync status; it may differ after refreshing.', ja: '状態の同期に失敗しました。更新後に差異が出る場合があります。' },
+        '删除同步失败，请刷新重试。': { en: 'Failed to sync deletion. Refresh and try again.', ja: '削除の同期に失敗しました。更新して再試行してください。' },
+        '还没有待办。': { en: 'No to-dos yet.', ja: 'やることはありません。' },
+
+        /* 图床 */
+        '上传后得到直链，可用于论坛配图或分享截图': {
+            en: 'Get a direct link for forum images or sharing screenshots',
+            ja: 'アップロードすると直リンクを取得でき、掲示板の画像やスクリーンショット共有に使えます'
+        },
+        '点击选择图片，或把截图拖到这里': { en: 'Click to choose images, or drop screenshots here', ja: 'クリックして画像を選択、またはスクリーンショットをここにドロップ' },
+        '支持 PNG / JPG / WEBP / GIF，单张不超过 8MB，也可以直接 Ctrl + V 粘贴': {
+            en: 'PNG / JPG / WEBP / GIF, up to 8MB each. You can also paste with Ctrl + V',
+            ja: 'PNG / JPG / WEBP / GIF 対応、1 枚 8MB まで。Ctrl + V で貼り付けもできます'
+        },
+        '登录后即可上传，图片会保存到服务器。': { en: 'Log in to upload; images are stored on the server.', ja: 'ログインするとアップロードできます。画像はサーバーに保存されます。' },
+        '上传的图片保存在服务器 uploads 目录，删除记录时会一并删除文件。': {
+            en: 'Uploaded images are stored in the server uploads folder and removed together with the record.',
+            ja: 'アップロードした画像はサーバーの uploads フォルダに保存され、記録の削除と同時にファイルも削除されます。'
+        },
+        '登录后可以查看自己上传过的图片。': { en: 'Log in to see images you have uploaded.', ja: 'ログインするとアップロード済みの画像を確認できます。' },
+        '还没有上传过图片。': { en: 'No images uploaded yet.', ja: 'まだ画像をアップロードしていません。' },
+        '刚刚上传': { en: 'Just uploaded', ja: 'アップロード直後' },
+        '复制链接': { en: 'Copy link', ja: 'リンクをコピー' },
+        '删除': { en: 'Delete', ja: '削除' },
+        '登录后才能上传图片。': { en: 'Log in to upload images.', ja: '画像をアップロードするにはログインが必要です。' },
+        '请选择 PNG / JPG / WEBP / GIF 图片。': { en: 'Please choose PNG / JPG / WEBP / GIF images.', ja: 'PNG / JPG / WEBP / GIF 画像を選択してください。' },
+        '准备上传': { en: 'Preparing to upload', ja: 'アップロード準備中' },
+        '登录已过期，请重新登录。': { en: 'Your session expired. Please log in again.', ja: 'ログインの有効期限が切れました。再度ログインしてください。' },
+
+        /* 短链接 */
+        '长链接一键变短，分享更方便': { en: 'Turn long links into short ones for easier sharing', ja: '長いリンクをワンクリックで短縮して共有を簡単に' },
+        '粘贴长链接，例如 https://example.com/very/long/path': {
+            en: 'Paste a long link, e.g. https://example.com/very/long/path',
+            ja: '長いリンクを貼り付け（例：https://example.com/very/long/path）'
+        },
+        '生成短链': { en: 'Shorten', ja: '短縮する' },
+        '登录后可以生成并管理自己的短链接。': { en: 'Log in to create and manage your short links.', ja: 'ログインすると短縮リンクの作成と管理ができます。' },
+        '短链接已生成': { en: 'Short link created', ja: '短縮リンクを作成しました' },
+        '复制': { en: 'Copy', ja: 'コピー' },
+        '还没有生成过短链接。': { en: 'No short links yet.', ja: 'まだ短縮リンクがありません。' },
+        '登录后才能生成短链接。': { en: 'Log in to create short links.', ja: '短縮リンクの作成にはログインが必要です。' },
+        '先粘贴一个长链接。': { en: 'Paste a long link first.', ja: 'まず長いリンクを貼り付けてください。' },
+        '正在生成…': { en: 'Creating...', ja: '作成中...' },
+        '生成成功，点右侧按钮复制。': { en: 'Created. Click the button on the right to copy.', ja: '作成しました。右のボタンでコピーできます。' },
+        '已删除。': { en: 'Deleted.', ja: '削除しました。' },
+
+        /* Markdown 笔记 */
+        '左边写 Markdown，右边实时预览，内容保存在服务器': {
+            en: 'Write Markdown on the left, preview live on the right; notes are saved on the server',
+            ja: '左で Markdown を書き、右でリアルタイムプレビュー。内容はサーバーに保存されます'
+        },
+        '新建笔记': { en: 'New note', ja: '新規ノート' },
+        '笔记标题': { en: 'Note title', ja: 'ノートのタイトル' },
+        'AI 润色': { en: 'AI polish', ja: 'AI 推敲' },
+        '只看预览': { en: 'Preview only', ja: 'プレビューのみ' },
+        '返回编辑': { en: 'Back to edit', ja: '編集に戻る' },
+        '保存': { en: 'Save', ja: '保存' },
+        '在这里写 Markdown，右侧会实时预览': { en: 'Write Markdown here; the right side previews live', ja: 'ここに Markdown を書くと、右側にリアルタイムでプレビューされます' },
+        '未登录时无法保存笔记，请先登录。': { en: 'Log in first to save notes.', ja: 'ノートを保存するにはログインしてください。' },
+        '开始写 Markdown，这里会实时预览。': { en: 'Start writing Markdown; the preview appears here.', ja: 'Markdown を書き始めると、ここにプレビューが表示されます。' },
+        '还没有笔记。': { en: 'No notes yet.', ja: 'まだノートがありません。' },
+        '还没有笔记，点「新建笔记」开始吧。': { en: 'No notes yet. Click "New note" to start.', ja: 'まだノートがありません。「新規ノート」から始めましょう。' },
+        '未命名笔记': { en: 'Untitled note', ja: '無題のノート' },
+        '登录后才能保存笔记。': { en: 'Log in to save notes.', ja: 'ノートの保存にはログインが必要です。' },
+        '登录后才能使用 AI 润色。': { en: 'Log in to use AI polish.', ja: 'AI 推敲を使うにはログインが必要です。' },
+        '登录后才能删除笔记。': { en: 'Log in to delete notes.', ja: 'ノートの削除にはログインが必要です。' },
+        '新笔记，写完点保存。': { en: 'New note. Click Save when done.', ja: '新しいノートです。書き終えたら保存を押してください。' },
+        '正在保存…': { en: 'Saving...', ja: '保存中...' },
+        '已保存。': { en: 'Saved.', ja: '保存しました。' },
+        'AI 正在润色，稍等一下…': { en: 'AI is polishing, one moment...', ja: 'AI が推敲中です。少々お待ちください...' },
+        '润色完成，确认没问题后点保存。': { en: 'Polishing done. Click Save after reviewing.', ja: '推敲が完了しました。確認後に保存してください。' },
+        '先写点内容再润色。': { en: 'Write something before polishing.', ja: '推敲する前に内容を書いてください。' },
+        '当前没有已保存的笔记。': { en: 'There is no saved note yet.', ja: '保存済みのノートがありません。' },
+        '当前笔记还没保存，确定切换到另一篇吗？': { en: 'The current note is unsaved. Switch anyway?', ja: '現在のノートは未保存です。切り替えますか？' },
+
+        /* v1.1.5 更新日志 */
+        '云端待办清单：添加、勾选完成、一键清除，登录后换设备也能继续。': {
+            en: 'Cloud to-do list: add, check off and clear completed items; continue on any device after logging in.',
+            ja: 'クラウドのやることリスト：追加・完了チェック・一括削除ができ、ログインすれば別端末でも続けられます。'
+        },
+        '极简图床：上传图片得到直链，支持拖拽与 Ctrl + V 粘贴，可复制地址或删除。': {
+            en: 'Minimal image host: upload images to get direct links, with drag & drop and Ctrl + V paste, copy and delete.',
+            ja: 'シンプルな画像ホスト：画像をアップロードして直リンクを取得。ドラッグ＆ドロップや Ctrl + V 貼り付け、コピー・削除に対応。'
+        },
+        '短链接生成器：长链接一键变短，带访问次数统计与管理。': {
+            en: 'Short link generator: shorten long links in one click, with visit counts and management.',
+            ja: '短縮リンク生成：長いリンクをワンクリックで短縮。アクセス回数の統計と管理付き。'
+        },
+        'Markdown 笔记：左侧书写右侧实时预览，支持一键 AI 润色，内容保存在服务器。': {
+            en: 'Markdown notes: write on the left, live preview on the right, one-click AI polish, saved on the server.',
+            ja: 'Markdown ノート：左で書き右でリアルタイムプレビュー。ワンクリック AI 推敲に対応し、内容はサーバーに保存されます。'
+        },
+        '以上功能位于左侧「效率」分组；未登录时待办只保存在本机，图床与笔记需要登录。': {
+            en: 'These features live in the "Productivity" group; while logged out, to-dos stay on this device, and image host and notes require login.',
+            ja: 'これらの機能は左側の「効率化」グループにあります。未ログイン時はやることがこの端末にのみ保存され、画像ホストとノートにはログインが必要です。'
+        }
+    };
+    Object.assign(WORDS, TOOL_WORDS);
+
     /* 带变量的句子：用正则匹配后再翻译 */
     const PATTERNS = [
         {
@@ -664,6 +792,66 @@
             re: /^选择 (.+) 文件$/,
             en: (m) => 'Choose ' + m[1] + ' file',
             ja: (m) => m[1] + ' ファイルを選択'
+        },
+        {
+            re: /^(\d+) 项待办$/,
+            en: (m) => m[1] + ' to-do(s)',
+            ja: (m) => m[1] + ' 件'
+        },
+        {
+            re: /^已同步到云端，共 (\d+) 条。$/,
+            en: (m) => 'Synced to the cloud: ' + m[1] + ' item(s).',
+            ja: (m) => 'クラウドに同期しました：' + m[1] + ' 件。'
+        },
+        {
+            re: /^正在上传 (\d+) \/ (\d+)…$/,
+            en: (m) => 'Uploading ' + m[1] + ' / ' + m[2] + '...',
+            ja: (m) => m[1] + ' / ' + m[2] + ' をアップロード中...'
+        },
+        {
+            re: /^准备上传 (\d+) 张图片…$/,
+            en: (m) => 'Preparing to upload ' + m[1] + ' image(s)...',
+            ja: (m) => '画像 ' + m[1] + ' 枚のアップロードを準備中...'
+        },
+        {
+            re: /^上传完成，共 (\d+) 张，直链可以直接复制。$/,
+            en: (m) => 'Upload complete: ' + m[1] + ' image(s). Copy the direct link.',
+            ja: (m) => 'アップロード完了：' + m[1] + ' 枚。直リンクをコピーできます。'
+        },
+        {
+            re: /^今天已上传 (\d+) \/ (\d+) 张。$/,
+            en: (m) => 'Uploaded today: ' + m[1] + ' / ' + m[2] + '.',
+            ja: (m) => '本日のアップロード：' + m[1] + ' / ' + m[2] + ' 枚。'
+        },
+        {
+            re: /^成功 (\d+) 张，失败 (\d+) 张：(.*)$/,
+            en: (m) => m[1] + ' succeeded, ' + m[2] + ' failed: ' + m[3],
+            ja: (m) => '成功 ' + m[1] + ' 枚、失敗 ' + m[2] + ' 枚：' + m[3]
+        },
+        {
+            re: /^(\d+) 次访问$/,
+            en: (m) => m[1] + ' visit(s)',
+            ja: (m) => m[1] + ' 回アクセス'
+        },
+        {
+            re: /^共 (\d+) 篇笔记。$/,
+            en: (m) => m[1] + ' note(s).',
+            ja: (m) => 'ノート ' + m[1] + ' 件。'
+        },
+        {
+            re: /^已打开「(.+)」。$/,
+            en: (m) => 'Opened "' + tr(m[1]) + '".',
+            ja: (m) => '「' + tr(m[1]) + '」を開きました。'
+        },
+        {
+            re: /^链接已复制：(\S+)$/,
+            en: (m) => 'Link copied: ' + m[1],
+            ja: (m) => 'リンクをコピーしました：' + m[1]
+        },
+        {
+            re: /^短链接已复制：(\S+)$/,
+            en: (m) => 'Short link copied: ' + m[1],
+            ja: (m) => '短縮リンクをコピーしました：' + m[1]
         }
     ];
 
