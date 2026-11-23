@@ -11,6 +11,7 @@ const HASH_TO_VIEW = {
     docs: 'view-docs',
     unzip: 'view-unzip',
     translate: 'view-translate',
+    download: 'view-download',
     todos: 'view-todos',
     imghost: 'view-imghost',
     short: 'view-short',
@@ -73,6 +74,7 @@ function switchView(element) {
     if (targetId === 'view-docs' && window.initDocsView) window.initDocsView();
     if (targetId === 'view-unzip' && window.initUnzipView) window.initUnzipView();
     if (targetId === 'view-translate' && window.initTranslateView) window.initTranslateView();
+    if (targetId === 'view-download' && window.initDownloadView) window.initDownloadView();
     if (targetId === 'view-todos' && window.initTodoView) window.initTodoView();
     if (targetId === 'view-imghost' && window.initImgHostView) window.initImgHostView();
     if (targetId === 'view-short' && window.initShortView) window.initShortView();

@@ -716,6 +716,80 @@
     };
     Object.assign(WORDS, TOOL_WORDS);
 
+    /* ---------------- 高速下载 ---------------- */
+    const DOWNLOAD_WORDS = {
+        '高速下载': { en: 'Fast download', ja: '高速ダウンロード' },
+        'GitHub / Hugging Face 链接自动换成镜像，下载由浏览器直连，不经过本站': {
+            en: 'GitHub / Hugging Face links are converted to mirrors; downloads go straight from your browser, not through this site',
+            ja: 'GitHub / Hugging Face のリンクを自動でミラーに変換。ダウンロードはブラウザから直接行われ、当サイトを経由しません'
+        },
+        '粘贴 GitHub、Hugging Face 或其他下载链接': { en: 'Paste a GitHub, Hugging Face or other download link', ja: 'GitHub・Hugging Face・その他のダウンロードリンクを貼り付け' },
+        '解析': { en: 'Analyze', ja: '解析' },
+        '支持 GitHub 文件 / Release / 仓库压缩包、Hugging Face 模型与数据集。': {
+            en: 'Supports GitHub files, releases and repo archives, plus Hugging Face models and datasets.',
+            ja: 'GitHub のファイル / Release / リポジトリのアーカイブ、Hugging Face のモデルとデータセットに対応。'
+        },
+        '原始链接': { en: 'Original link', ja: '元のリンク' },
+        '镜像加速': { en: 'Mirrors', ja: 'ミラー加速' },
+        '直链': { en: 'Direct', ja: '直リンク' },
+        '自建中转': { en: 'Custom proxy', ja: '自前プロキシ' },
+        '任选一个能打开的即可': { en: 'Pick whichever opens', ja: '開けるものを 1 つ選んでください' },
+        'GitHub 链接': { en: 'GitHub link', ja: 'GitHub リンク' },
+        'GitHub 文件': { en: 'GitHub file', ja: 'GitHub ファイル' },
+        'GitHub Release': { en: 'GitHub release', ja: 'GitHub リリース' },
+        'GitHub 仓库压缩包': { en: 'GitHub repo archive', ja: 'GitHub リポジトリの ZIP' },
+        '普通链接': { en: 'Regular link', ja: '通常のリンク' },
+        '官方地址': { en: 'Official address', ja: '公式アドレス' },
+        'hf-mirror.com 国内镜像': { en: 'hf-mirror.com mirror', ja: 'hf-mirror.com ミラー' },
+        '公共镜像只覆盖 GitHub 与 Hugging Face': { en: 'Public mirrors only cover GitHub and Hugging Face', ja: '公共ミラーは GitHub と Hugging Face のみ対応' },
+        '可以复制直链用下载工具加速': { en: 'Copy the direct link and use a download tool', ja: '直リンクをコピーしてダウンロードツールで加速できます' },
+        '使用你填写的加速前缀': { en: 'Uses your custom acceleration prefix', ja: '入力した加速プレフィックスを使用' },
+        '打开': { en: 'Open', ja: '開く' },
+        '自建加速前缀（可选）': { en: 'Custom acceleration prefix (optional)', ja: '自前の加速プレフィックス（任意）' },
+        '保存前缀': { en: 'Save prefix', ja: 'プレフィックスを保存' },
+        '已生成下载地址，点「打开」由浏览器直连镜像下载。': {
+            en: 'Links generated. Click "Open" to download directly from the mirror.',
+            ja: 'リンクを生成しました。「開く」でミラーから直接ダウンロードできます。'
+        },
+        '这个链接看起来不太对，检查一下再试。': { en: 'That link does not look right. Please check it and try again.', ja: 'リンクが正しくないようです。確認してもう一度お試しください。' },
+        '已保存自建加速前缀，重新解析即可生效。': { en: 'Custom prefix saved. Analyze again to apply it.', ja: 'プレフィックスを保存しました。再解析すると反映されます。' },
+        '已清除自建加速前缀。': { en: 'Custom prefix cleared.', ja: 'プレフィックスを削除しました。' },
+        '使用说明': { en: 'How to use', ja: '使い方' },
+        '公共镜像只覆盖 GitHub 与 Hugging Face，打不开就换另一个镜像；镜像服务由第三方提供，可能随时失效。': {
+            en: 'Public mirrors cover only GitHub and Hugging Face. If one fails, try another; third-party mirrors may stop working at any time.',
+            ja: '公共ミラーは GitHub と Hugging Face のみ対応です。開けない場合は別のミラーを試してください。サードパーティ製のため予告なく停止する場合があります。'
+        },
+        '下载由浏览器直接连接镜像，不经过本站服务器，因此不受服务器带宽影响，也不占用服务器流量。': {
+            en: 'Downloads connect from your browser straight to the mirror, bypassing this server, so slow server bandwidth does not matter and no server traffic is used.',
+            ja: 'ダウンロードはブラウザからミラーに直接接続するため、当サーバーを経由しません。サーバーの帯域に影響されず、通信量も消費しません。'
+        },
+        '粘贴仓库地址默认按 main 分支打包；如果仓库使用 master 分支，把生成链接里的 main 改成 master 即可。': {
+            en: 'Repository links are packed from the main branch by default; if the repo uses master, change main to master in the generated link.',
+            ja: 'リポジトリのリンクは既定で main ブランチを ZIP 化します。master ブランチの場合は生成リンクの main を master に変えてください。'
+        },
+        '其他网站没有公共镜像，可以复制直链到下载工具，或填写你自建的中转前缀（支持 {url} 占位符）。': {
+            en: 'Other sites have no public mirror: copy the direct link into a download tool, or fill in your own proxy prefix (supports the {url} placeholder).',
+            ja: '他のサイトには公共ミラーがありません。直リンクをダウンロードツールに渡すか、自前の中継プレフィックスを入力してください（{url} プレースホルダー対応）。'
+        },
+        '「高速下载」：粘贴 GitHub 文件 / Release / 仓库地址，自动生成多个镜像下载链接。': {
+            en: '"Fast download": paste a GitHub file, release or repo URL to generate several mirror links automatically.',
+            ja: '「高速ダウンロード」：GitHub のファイル / Release / リポジトリの URL を貼り付けると、複数のミラーリンクを自動生成します。'
+        },
+        'Hugging Face 模型与数据集一键换成 hf-mirror.com 地址，也支持 raw.githubusercontent.com。': {
+            en: 'Hugging Face models and datasets switch to hf-mirror.com in one click; raw.githubusercontent.com is supported too.',
+            ja: 'Hugging Face のモデルとデータセットをワンクリックで hf-mirror.com に変換。raw.githubusercontent.com にも対応。'
+        },
+        '任意链接可生成直链；填写自建加速前缀后可生成中转链接，前缀保存在本地。': {
+            en: 'Any URL can be turned into a direct link; with a custom prefix you also get proxy links, saved locally.',
+            ja: '任意の URL を直リンク化できます。自前プレフィックスを入力すると中継リンクも生成され、ローカルに保存されます。'
+        },
+        '下载由浏览器直连镜像，不经过本站服务器，不占用服务器带宽；公共镜像失效时换一个即可。': {
+            en: 'Downloads go from the browser to the mirror directly, bypassing this server and its bandwidth; if a public mirror fails, try another.',
+            ja: 'ダウンロードはブラウザからミラーへ直接行われ、当サーバーや帯域を使いません。公共ミラーが使えない場合は別のものをお試しください。'
+        }
+    };
+    Object.assign(WORDS, DOWNLOAD_WORDS);
+
     /* 带变量的句子：用正则匹配后再翻译 */
     const PATTERNS = [
         {
@@ -852,6 +926,11 @@
             re: /^短链接已复制：(\S+)$/,
             en: (m) => 'Short link copied: ' + m[1],
             ja: (m) => '短縮リンクをコピーしました：' + m[1]
+        },
+        {
+            re: /^下载地址已复制：(\S+)$/,
+            en: (m) => 'Download link copied: ' + m[1],
+            ja: (m) => 'ダウンロードリンクをコピーしました：' + m[1]
         }
     ];
 

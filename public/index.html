@@ -11,7 +11,7 @@
             document.documentElement.setAttribute('data-theme', saved);
         })();
     </script>
-    <link rel="stylesheet" href="app.css?v=1.1.5">
+    <link rel="stylesheet" href="app.css?v=1.1.6">
 </head>
 <body>
     <div class="scrim" id="scrim" onclick="toggleSidebar()"></div>
@@ -59,6 +59,10 @@
                 <button type="button" class="nav-item" data-target="view-translate" onclick="switchView(this)">
                     <svg viewBox="0 0 24 24"><path d="M4 5h8v2H9.6c.3 1.8 1 3.4 2 4.8-.7.7-1.5 1.3-2.4 1.8l-1-1.6c1-.6 1.8-1.4 2.3-2.4H4V7h3.4V5zm9 2h7v2h-2.4c-.3 1.6-.9 3-1.8 4.2.7.6 1.5 1 2.4 1.4l-.8 1.8c-1.1-.5-2-1.1-2.8-1.9-.8.8-1.7 1.4-2.8 1.9l-.8-1.8c.9-.4 1.7-.8 2.4-1.4-1-1.2-1.6-2.6-1.9-4.2H13V7zm4.2 0h2.2c.2 1.2.6 2.3 1.2 3.3-.5.4-1.1.7-1.7 1-.5-.7-.9-1.4-1.2-2.2-.2-.7-.4-1.4-.5-2.1zM6 14h8v2H9.5l4.6 4.4-1.3 1.5L7.9 17H6v-3z"/></svg>
                     <span class="nav-text">翻译</span>
+                </button>
+                <button type="button" class="nav-item" data-target="view-download" onclick="switchView(this)">
+                    <svg viewBox="0 0 24 24"><path d="M11 3h2v8.2l3.3-3.3 1.4 1.4L12 15l-5.7-5.7 1.4-1.4L11 11.2zM5 17h14v2H5z"/></svg>
+                    <span class="nav-text">高速下载</span>
                 </button>
                 <button type="button" class="nav-item" data-target="view-svc" onclick="switchView(this)">
                     <svg viewBox="0 0 24 24"><path d="M3 15c2 0 2-6 4-6s2 6 4 6 2-6 4-6 2 6 4 6 2-3 2-3v2s-1 3-4 3-2-6-4-6-2 6-4 6-2-6-4-6-2 6-4 6v-2s1 3 2 3z"/></svg>
@@ -342,6 +346,34 @@
                     </div>
                 </section>
 
+                <section id="view-download" class="view-section">
+                    <div class="panel convert-panel">
+                        <div class="convert-head">
+                            <h3>高速下载</h3>
+                            <span class="convert-note">GitHub / Hugging Face 链接自动换成镜像，下载由浏览器直连，不经过本站</span>
+                        </div>
+                        <div class="todo-add">
+                            <input id="dl-input" type="text" placeholder="粘贴 GitHub、Hugging Face 或其他下载链接" onkeydown="dlKey(event)">
+                            <button type="button" class="primary" onclick="parseDownload()">解析</button>
+                        </div>
+                        <div class="dl-result" id="dl-result"></div>
+                        <p class="convert-status" id="dl-status">支持 GitHub 文件 / Release / 仓库压缩包、Hugging Face 模型与数据集。</p>
+                        <div class="dl-proxy">
+                            <label>自建加速前缀（可选）
+                                <input id="dl-proxy" type="text" placeholder="例如 https://your-worker.workers.dev/">
+                            </label>
+                            <button type="button" class="ghost small" onclick="savePrefix()">保存前缀</button>
+                        </div>
+                        <details class="dl-help">
+                            <summary>使用说明</summary>
+                            <p>公共镜像只覆盖 GitHub 与 Hugging Face，打不开就换另一个镜像；镜像服务由第三方提供，可能随时失效。</p>
+                            <p>下载由浏览器直接连接镜像，不经过本站服务器，因此不受服务器带宽影响，也不占用服务器流量。</p>
+                            <p>粘贴仓库地址默认按 main 分支打包；如果仓库使用 master 分支，把生成链接里的 main 改成 master 即可。</p>
+                            <p>其他网站没有公共镜像，可以复制直链到下载工具，或填写你自建的中转前缀（支持 {url} 占位符）。</p>
+                        </details>
+                    </div>
+                </section>
+
                 <section id="view-todos" class="view-section">
                     <div class="panel convert-panel">
                         <div class="convert-head">
@@ -433,7 +465,17 @@
                     <div class="panel">
                         <h3>更新日志</h3>
                         <article class="release">
-                            <h2>v1.1.5 <span class="badge badge-new">最新</span></h2>
+                            <h2>v1.1.6 <span class="badge badge-new">最新</span></h2>
+                            <p>2026年11月23日</p>
+                            <ul>
+                                <li><span class="badge badge-new">新增</span>「高速下载」：粘贴 GitHub 文件 / Release / 仓库地址，自动生成多个镜像下载链接。</li>
+                                <li><span class="badge badge-new">新增</span>Hugging Face 模型与数据集一键换成 hf-mirror.com 地址，也支持 raw.githubusercontent.com。</li>
+                                <li><span class="badge badge-new">新增</span>任意链接可生成直链；填写自建加速前缀后可生成中转链接，前缀保存在本地。</li>
+                                <li><span class="badge badge-fix">说明</span>下载由浏览器直连镜像，不经过本站服务器，不占用服务器带宽；公共镜像失效时换一个即可。</li>
+                            </ul>
+                        </article>
+                        <article class="release">
+                            <h2>v1.1.5</h2>
                             <p>2026年11月23日</p>
                             <ul>
                                 <li><span class="badge badge-new">新增</span>云端待办清单：添加、勾选完成、一键清除，登录后换设备也能继续。</li>
@@ -707,18 +749,19 @@
             </div>
         </div>
     </div>
-    <script src="i18n.js?v=1.1.5"></script>
-    <script src="script.js?v=1.1.5"></script>
-    <script src="convert.js?v=1.1.5"></script>
-    <script src="frame.js?v=1.1.5"></script>
-    <script src="docconvert.js?v=1.1.5"></script>
-    <script src="unzip.js?v=1.1.5"></script>
-    <script src="translate.js?v=1.1.5"></script>
-    <script src="vendor/md/marked.min.js?v=1.1.5"></script>
-    <script src="todo.js?v=1.1.5"></script>
-    <script src="imghost.js?v=1.1.5"></script>
-    <script src="shortlink.js?v=1.1.5"></script>
-    <script src="notes.js?v=1.1.5"></script>
-    <script src="live2d-mascot.js?v=1.1.5"></script>
+    <script src="i18n.js?v=1.1.6"></script>
+    <script src="script.js?v=1.1.6"></script>
+    <script src="convert.js?v=1.1.6"></script>
+    <script src="frame.js?v=1.1.6"></script>
+    <script src="docconvert.js?v=1.1.6"></script>
+    <script src="unzip.js?v=1.1.6"></script>
+    <script src="translate.js?v=1.1.6"></script>
+    <script src="download.js?v=1.1.6"></script>
+    <script src="vendor/md/marked.min.js?v=1.1.6"></script>
+    <script src="todo.js?v=1.1.6"></script>
+    <script src="imghost.js?v=1.1.6"></script>
+    <script src="shortlink.js?v=1.1.6"></script>
+    <script src="notes.js?v=1.1.6"></script>
+    <script src="live2d-mascot.js?v=1.1.6"></script>
 </body>
 </html>

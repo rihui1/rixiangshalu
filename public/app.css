@@ -680,3 +680,54 @@ html[data-theme="dark"] .note-item.active { background: #3a2431; border-color: #
 html[data-theme="dark"] .md-preview { background: #241a20; }
 html[data-theme="dark"] .img-info code { background: rgba(58, 36, 49, 0.9); color: #f3b9cd; }
 html[data-theme="dark"] .todo-del:hover { background: #3a2431; }
+
+/* ---------- 高速下载 ---------- */
+.dl-result { display: grid; gap: 14px; margin-top: 16px; }
+.dl-block {
+    border: 1px solid var(--line); border-radius: 14px; background: #fdf4f7;
+    padding: 14px 16px;
+}
+.dl-block-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.dl-block-head strong { font-size: 14px; }
+.dl-block-head span { color: var(--muted); font-size: 12px; }
+.dl-row {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 8px 0; border-top: 1px dashed var(--line);
+}
+.dl-row:first-of-type { border-top: 0; }
+.dl-name {
+    flex-shrink: 0; min-width: 96px; font-size: 12px; font-weight: 700;
+    color: #a35a76;
+}
+.dl-row code {
+    flex: 1; min-width: 200px; font-size: 12px; line-height: 1.5;
+    overflow-wrap: anywhere; color: var(--ink);
+    background: rgba(255, 255, 255, 0.72); border-radius: 6px; padding: 4px 8px;
+}
+.dl-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.dl-actions a.ghost { display: inline-flex; align-items: center; text-decoration: none; }
+.dl-proxy {
+    display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap;
+    margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line);
+}
+.dl-proxy label { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 220px; font-size: 13px; color: var(--muted); }
+.dl-proxy input {
+    width: 100%; border: 1px solid var(--line); background: white; border-radius: 12px;
+    padding: 10px 12px; color: var(--ink); font-size: 13px;
+}
+.dl-help { margin-top: 14px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; background: rgba(255,255,255,0.5); }
+.dl-help summary { cursor: pointer; font-size: 13px; font-weight: 700; color: var(--ink); }
+.dl-help p { margin: 8px 0 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
+
+@media (max-width: 900px) {
+    .dl-row { align-items: flex-start; }
+    .dl-name { min-width: 100%; }
+    .dl-actions { width: 100%; }
+}
+
+html[data-theme="dark"] .dl-block { background: #2a1d25; }
+html[data-theme="dark"] .dl-row code { background: rgba(58, 36, 49, 0.9); color: #f3d7e2; }
+html[data-theme="dark"] .dl-name { color: #f3b9cd; }
+html[data-theme="dark"] .dl-proxy input { background: #2a1d25; color: var(--ink); }
+html[data-theme="dark"] .dl-help { background: rgba(42, 29, 37, 0.7); }
+
