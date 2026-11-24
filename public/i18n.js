@@ -28,6 +28,16 @@
         'SVC 转换': { en: 'SVC', ja: 'SVC 変換' },
         '账号': { en: 'Account', ja: 'アカウント' },
         '用户中心': { en: 'Profile', ja: 'ユーザーセンター' },
+        '关于': { en: 'About', ja: '概要' },
+        '关于日向论坛': { en: 'About Rixiang Forum', ja: '日向フォーラムについて' },
+        '由日向个人搭建的小型社区与工具箱': { en: 'A small community & toolbox built by Rixiang', ja: '日向個人による小さなコミュニティ＆ツールボックス' },
+        '⚠️ 本网站已获得工信部 ICP 备案和公安备案，请遵守相关法律法规': { en: '⚠️ This site has obtained ICP and public security registrations. Please comply with relevant laws.', ja: '⚠️ 本サイトは ICP 届出と公安届出を取得済み。関連法規を遵守してください。' },
+        '关于这个网站': { en: 'About this site', ja: 'このサイトについて' },
+        '原本这个网站是为一位日向特别在乎的人做的，结果做着做着……变成了我的个人网站。': { en: 'This site was originally made for someone Rixiang cares about deeply... but somehow along the way, it became my personal website.', ja: 'このサイトはもともと日向が大切にしている人のために作り始めたものですが、気づけば……私自身の個人サイトになっていました。' },
+        '我把我自己及平时经常用的一些功能都加进去了，算是方便自己也方便一下其他人。后面我还会进行持续维护和更新，并且永久完全免费。': { en: 'I added features I personally use often — convenient for me, and hopefully for others too. I\'ll keep maintaining and updating it, and it will stay permanently free of charge.', ja: 'よく使う機能を詰め込みました。自分に便利で、他の人にも役立てば嬉しいです。今後もずっと無料で保守・更新し続けます。' },
+        '本网站由日向个人搭建，所有功能除了 AI 对话均在浏览器内部运行，不会上传到服务器。服务器已托管到 Cloudflare。': { en: 'Built personally by Rixiang. All features except AI chat run entirely in your browser — nothing is uploaded to the server. Hosting is on Cloudflare.', ja: '日向個人が構築。AI チャットを除く全機能はブラウザ内で完結し、サーバーへはアップロードされません。サーバーは Cloudflare でホスティング。' },
+        '另外由于日向本人还是个大学生，学校晚上是会熄灯断电的，所以网站的开启时间比较随缘啦～': { en: 'Also, I\'m still a college student and dorms cut power at night, so the site\'s uptime is... well, a bit random ~', ja: 'ちなみに日向はまだ大学生で、寮が夜に消灯・停電するので、サイトの稼働時間は……まあ、運ですね～' },
+        'B 站主页': { en: 'Bilibili', ja: 'Bilibili ホーム' },
         '切换侧栏': { en: 'Toggle sidebar', ja: 'サイドバー切替' },
         '切换深浅色': { en: 'Toggle dark mode', ja: 'ダークモード切替' },
         '选择界面语言': { en: 'Choose language', ja: '言語を選択' },
@@ -370,18 +380,6 @@
         '举报请联系网站管理员': { en: 'Contact the site administrator to report issues', ja: '通報はサイト管理者までご連絡ください' },
         '联系邮箱：': { en: 'Contact email: ', ja: '連絡先メール：' },
         '本网站已通过ICP备案，备案码：': { en: 'ICP filing number: ', ja: 'ICP 登録番号：' },
-
-        /* 关于本站 */
-        '其他': { en: 'Others', ja: 'その他' },
-        '关于': { en: 'About', ja: '概要' },
-        '关于本站': { en: 'About this site', ja: 'このサイトについて' },
-        '一些想说的话，以及相关链接': { en: 'A few words and related links', ja: 'ちょっとしたお話と関連リンク' },
-        '由日向个人搭建 · 永久免费': { en: 'Built by Hinata · Forever free', ja: '日向個人による制作 · 永久無料' },
-        'B 站主页': { en: 'Bilibili channel', ja: 'B チャンネル' },
-        '本网站已获得工信部 ICP 备案和公安备案，请遵守相关法律法规。': {
-            en: 'This site has ICP filing and Public Security registration from Chinese authorities. Please respect the laws and regulations.',
-            ja: '当サイトは ICP 登録と公安届出を取得済みです。関連する法令を遵守してください。'
-        },
 
         /* 更新日志标签 */
         '最新': { en: 'Latest', ja: '最新' },

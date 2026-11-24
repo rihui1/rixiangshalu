@@ -12,14 +12,14 @@ const HASH_TO_VIEW = {
     unzip: 'view-unzip',
     translate: 'view-translate',
     download: 'view-download',
-    about: 'view-about',
     todos: 'view-todos',
     imghost: 'view-imghost',
     short: 'view-short',
     notes: 'view-notes',
     svc: 'view-svc',
     changelog: 'view-changelog',
-    profile: 'view-profile'
+    profile: 'view-profile',
+    about: 'view-about'
 };
 
 function escapeHtml(str) {
