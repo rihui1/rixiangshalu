@@ -251,6 +251,8 @@ button { cursor: pointer; }
     text-align: center; color: var(--muted); font-size: 12px; padding: 4px 12px 12px;
 }.site-foot p { margin: 2px 0; }
 .site-foot a { color: var(--muted); }
+.site-foot-links { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.site-foot-sep { color: var(--muted); }
 .scrim { display: none; }
 .danger-zone { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
 

@@ -368,6 +368,7 @@
 
         /* 页脚 */
         '举报请联系网站管理员': { en: 'Contact the site administrator to report issues', ja: '通報はサイト管理者までご連絡ください' },
+        '联系邮箱：': { en: 'Contact email: ', ja: '連絡先メール：' },
         '本网站已通过ICP备案，备案码：': { en: 'ICP filing number: ', ja: 'ICP 登録番号：' },
 
         /* 更新日志标签 */
