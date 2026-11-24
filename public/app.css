@@ -733,3 +733,51 @@ html[data-theme="dark"] .dl-name { color: #f3b9cd; }
 html[data-theme="dark"] .dl-proxy input { background: #2a1d25; color: var(--ink); }
 html[data-theme="dark"] .dl-help { background: rgba(42, 29, 37, 0.7); }
 
+/* ---------- 关于本站 ---------- */
+.about-panel { max-width: 720px; }
+.about-card {
+    display: flex; align-items: center; gap: 16px;
+    padding: 18px 20px; border-radius: 16px; background: linear-gradient(135deg, #fde2ec 0%, #fce8d8 100%);
+    border: 1px solid #f2c3d2; margin-bottom: 16px;
+}
+.about-avatar { flex-shrink: 0; width: 72px; height: 72px; border-radius: 50%; overflow: hidden; box-shadow: 0 2px 12px rgba(224, 143, 168, 0.35); }
+.about-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.about-info { display: flex; flex-direction: column; gap: 4px; }
+.about-info strong { font-size: 18px; color: var(--ink); }
+.about-sub { font-size: 12px; color: var(--muted); }
+
+.about-links { margin-bottom: 16px; }
+.about-link-bili {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; border-radius: 12px;
+    border: 1px solid #a8e0ff; background: #f0f9ff;
+    text-decoration: none; color: var(--ink); transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.about-link-bili:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0, 174, 236, 0.2); }
+.about-link-bili span { font-weight: 700; font-size: 14px; }
+.about-link-bili em { font-style: normal; font-size: 12px; color: var(--muted); margin-left: auto; overflow-wrap: anywhere; }
+
+.about-notice {
+    padding: 14px 18px; border-radius: 12px;
+    background: #fff5e8; border: 1px solid #f2d9a8;
+    margin-bottom: 16px;
+}
+.about-notice p { margin: 0; font-size: 13px; line-height: 1.6; }
+.about-notice strong { color: #b87a2e; }
+.about-filing { margin-top: 6px !important; font-size: 12px !important; color: var(--muted); }
+.about-filing a { color: var(--muted); margin: 0 4px; }
+
+.about-story {
+    padding: 18px 20px; border-radius: 14px;
+    background: #fdf4f7; border: 1px solid var(--line);
+}
+.about-story p { margin: 8px 0; font-size: 14px; line-height: 1.8; color: var(--ink); }
+.about-story p:first-child { margin-top: 0; }
+.about-fun { font-style: italic; color: var(--muted); }
+
+html[data-theme="dark"] .about-card { background: linear-gradient(135deg, #3a2431 0%, #3a3024 100%); border-color: #5a3e4a; }
+html[data-theme="dark"] .about-link-bili { background: #1a2d3a; border-color: #2a4d62; color: var(--ink); }
+html[data-theme="dark"] .about-notice { background: #3a2f1e; border-color: #5a4a30; }
+html[data-theme="dark"] .about-notice strong { color: #e0b87a; }
+html[data-theme="dark"] .about-story { background: #2a1d25; }
+

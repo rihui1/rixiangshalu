@@ -371,6 +371,18 @@
         '联系邮箱：': { en: 'Contact email: ', ja: '連絡先メール：' },
         '本网站已通过ICP备案，备案码：': { en: 'ICP filing number: ', ja: 'ICP 登録番号：' },
 
+        /* 关于本站 */
+        '其他': { en: 'Others', ja: 'その他' },
+        '关于': { en: 'About', ja: '概要' },
+        '关于本站': { en: 'About this site', ja: 'このサイトについて' },
+        '一些想说的话，以及相关链接': { en: 'A few words and related links', ja: 'ちょっとしたお話と関連リンク' },
+        '由日向个人搭建 · 永久免费': { en: 'Built by Hinata · Forever free', ja: '日向個人による制作 · 永久無料' },
+        'B 站主页': { en: 'Bilibili channel', ja: 'B チャンネル' },
+        '本网站已获得工信部 ICP 备案和公安备案，请遵守相关法律法规。': {
+            en: 'This site has ICP filing and Public Security registration from Chinese authorities. Please respect the laws and regulations.',
+            ja: '当サイトは ICP 登録と公安届出を取得済みです。関連する法令を遵守してください。'
+        },
+
         /* 更新日志标签 */
         '最新': { en: 'Latest', ja: '最新' },
         '新增': { en: 'New', ja: '新機能' },

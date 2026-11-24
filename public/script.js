@@ -12,6 +12,7 @@ const HASH_TO_VIEW = {
     unzip: 'view-unzip',
     translate: 'view-translate',
     download: 'view-download',
+    about: 'view-about',
     todos: 'view-todos',
     imghost: 'view-imghost',
     short: 'view-short',
