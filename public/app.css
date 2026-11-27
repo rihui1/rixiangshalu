@@ -776,3 +776,158 @@ html[data-theme="dark"] .dl-name { color: #f3b9cd; }
 html[data-theme="dark"] .dl-proxy input { background: #2a1d25; color: var(--ink); }
 html[data-theme="dark"] .dl-help { background: rgba(42, 29, 37, 0.7); }
 
+/* ---------- 三端适配：桌面 / 平板 / 手机 ---------- */
+html { -webkit-text-size-adjust: 100%; }
+img, video, canvas { max-width: 100%; }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+.stage { overflow-x: hidden; }
+.convert-tabs, .tabs { flex-wrap: wrap; }
+@supports (height: 100dvh) {
+    html, body { height: 100dvh; }
+}
+
+/* 平板横屏 / 小笔记本 */
+@media (min-width: 901px) and (max-width: 1024px) {
+    .stage { padding: 6px 16px 20px; }
+    .hero { padding: 22px; }
+    .hero h2 { font-size: 30px; }
+    .unzip-cards { grid-template-columns: repeat(2, 1fr); }
+    .notes-editor { grid-template-columns: 1fr; }
+    .notes-editor textarea, .md-preview { min-height: 260px; }
+    .notes-layout { grid-template-columns: 200px 1fr; }
+    .drop-zone { padding: 28px 16px; }
+}
+
+/* 平板竖屏 / 大屏手机：侧栏改抽屉（断点与 script.js 保持一致） */
+@media (max-width: 900px) {
+    .sidebar { max-width: 84vw; box-shadow: 0 0 40px rgba(20, 10, 16, 0.35); }
+    .nav-scroll { -webkit-overflow-scrolling: touch; }
+    input, textarea, select,
+    .todo-add input, .note-title, .convert-options input, .convert-options select,
+    .trans-langs select, .trans-box textarea, .chat-bar input, .dl-proxy input,
+    .profile-grid .panel input, .profile-grid .panel textarea { font-size: 16px; }
+    .lang-select { font-size: 14px; }
+    .stage { padding: 4px 12px 16px; }
+}
+
+/* 手机 */
+@media (max-width: 640px) {
+    .topbar { padding: 0 10px; gap: 6px; height: 56px; }
+    .topbar h1 { font-size: 15px; }
+    .icon-btn { width: 34px; height: 34px; border-radius: 10px; }
+    .icon-btn svg { width: 18px; height: 18px; }
+    .lang-select { height: 34px; padding: 0 4px; width: 96px; max-width: 96px; flex-shrink: 0; font-size: 14px; }
+    .user-area { gap: 6px; }
+    .user-name { display: none; }
+    .avatar { width: 34px; height: 34px; min-width: 34px; }
+    .avatar svg { width: 18px; height: 18px; }
+    .text-btn { padding: 7px 10px; font-size: 13px; }
+    .stage { padding: 2px 10px 14px; }
+    .view-section { max-width: 100%; }
+    .hero { padding: 18px 16px; border-radius: 16px; }
+    .hero h2 { font-size: 24px; }
+    .hero p { font-size: 14px; }
+    .panel { padding: 14px; border-radius: 16px; }
+    .convert-panel, .notes-panel, .about-panel, .auth-panel { max-width: 100%; }
+    .convert-head h3 { font-size: 17px; }
+    .convert-tab { padding: 7px 11px; font-size: 13px; }
+    .drop-zone { padding: 24px 12px; }
+    .unzip-cards { gap: 8px; }
+    .unzip-card { padding: 10px; }
+    .file-info { font-size: 13px; }
+    .todo-add { gap: 8px; }
+    .todo-meta { flex-wrap: wrap; }
+    .docs-item { flex-direction: column; align-items: flex-start; }
+    .docs-item .ghost, .docs-item .primary, .docs-item .danger { width: 100%; text-align: center; justify-content: center; }
+    .profile-hero { padding: 16px; gap: 14px; }
+    .profile-hero .avatar-lg { width: 96px; height: 96px; }
+    .profile-head h2 { font-size: 20px; }
+    .profile-stats { width: 100%; gap: 10px; }
+    .profile-stats div { flex: 1; min-width: 0; }
+    .about-hero { padding: 16px; }
+    .about-story p { font-size: 14px; }
+    .about-link-card { padding: 12px 14px; }
+    .about-link-card span { white-space: normal; overflow-wrap: anywhere; }
+    .chat, .frame-wrap { height: calc(100vh - 140px); height: calc(100dvh - 140px); min-height: 320px; }
+    .chat-bar { padding: 10px; }
+    .bubble { max-width: 88%; }
+    .notes-list { grid-template-columns: 1fr; max-height: 180px; }
+    .note-title { font-size: 14px; }
+    .md-preview { min-height: 200px; }
+    .notes-editor textarea, .md-preview { min-height: 240px; }
+    .dl-row code { min-width: 0; width: 100%; }
+    .dl-proxy { flex-direction: column; align-items: stretch; }
+    .dl-proxy label { min-width: 0; width: 100%; }
+    .dl-proxy button { width: 100%; }
+    .trans-swap { width: 36px; height: 36px; }
+    .trans-langs { gap: 8px; }
+    .trans-box textarea { min-height: 140px; }
+    .img-item { flex-wrap: wrap; }
+    .img-thumb { width: 52px; height: 52px; }
+    .img-actions { width: 100%; }
+    .img-actions .ghost, .img-actions .primary, .img-actions .danger { flex: 1; text-align: center; }
+    .short-result { flex-direction: column; align-items: stretch; }
+    .link-item { flex-direction: column; align-items: flex-start; }
+    .link-main { min-width: 0; width: 100%; }
+    .link-actions { width: 100%; }
+    .crop-preview { width: min(260px, 100%); }
+    .crop-card { width: min(420px, calc(100% - 24px)); }
+    .site-foot { padding-bottom: 14px; font-size: 11.5px; }
+}
+
+/* 小屏手机 */
+@media (max-width: 400px) {
+    .topbar { gap: 4px; padding: 0 8px; }
+    .topbar h1 { font-size: 14px; }
+    .lang-select { width: 92px; max-width: 92px; font-size: 13px; }
+    .text-btn { padding: 7px 8px; }
+    .unzip-cards { grid-template-columns: 1fr; }
+    .panel { padding: 12px; }
+    .convert-tab { font-size: 12.5px; }
+    .profile-stats div { padding: 8px 10px; }
+}
+
+/* 手机横屏（高度很小） */
+@media (max-height: 560px) and (orientation: landscape) {
+    .topbar { height: 48px; }
+    .chat, .frame-wrap { height: calc(100vh - 96px); height: calc(100dvh - 96px); min-height: 240px; }
+    .nav-item { padding: 8px 10px; }
+    .sidebar .brand { padding: 10px 16px 4px; }
+}
+
+/* 触屏设备：加大点按区域 */
+@media (hover: none) and (pointer: coarse) {
+    .nav-item { padding: 12px 10px; }
+    .convert-tab { padding: 9px 14px; }
+    .ghost.small, .primary.small, .danger.small { padding: 9px 14px; }
+    .todo-del { padding: 8px 10px; }
+    .trans-swap { min-width: 40px; min-height: 40px; }
+}
+
+/* iPhone 刘海 / 底部安全区 */
+@supports (padding: max(0px)) {
+    @media (max-width: 900px) {
+        .topbar {
+            padding-left: max(12px, env(safe-area-inset-left));
+            padding-right: max(12px, env(safe-area-inset-right));
+        }
+        .stage {
+            padding-left: max(12px, env(safe-area-inset-left));
+            padding-right: max(12px, env(safe-area-inset-right));
+        }
+    }
+    @media (max-width: 640px) {
+        .topbar {
+            padding-left: max(10px, env(safe-area-inset-left));
+            padding-right: max(10px, env(safe-area-inset-right));
+        }
+        .stage {
+            padding-left: max(10px, env(safe-area-inset-left));
+            padding-right: max(10px, env(safe-area-inset-right));
+        }
+    }
+    .sidebar { padding-bottom: env(safe-area-inset-bottom); }
+    .chat-bar { padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+    .site-foot { padding-bottom: max(14px, env(safe-area-inset-bottom)); }
+}
+

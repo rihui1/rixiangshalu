@@ -41,8 +41,9 @@
 
     function defaultGeo() {
         const small = isSmallScreen();
-        const width = small ? 150 : 240;
-        const height = small ? 190 : 300;
+        const phone = window.matchMedia('(max-width: 640px)').matches;
+        const width = phone ? 110 : small ? 150 : 240;
+        const height = phone ? 140 : small ? 190 : 300;
         return {
             width: width,
             height: height,

@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <title>超管后台 · 日向论坛</title>
 <style>
@@ -143,6 +143,16 @@
     @media (max-width: 640px) {
         .shell { padding: 18px 12px 50px; }
         th, td { padding: 9px 10px; }
+        .login-card { padding: 24px 18px; }
+        .login-card input, .panel-head input[type="search"] { font-size: 16px; }
+        .stats { grid-template-columns: 1fr 1fr; gap: 8px; }
+        .stat { padding: 12px; }
+        .stat strong { font-size: 20px; }
+        .topbar { gap: 8px; }
+        .topbar h1 { font-size: 18px; }
+        .log-item { flex-direction: column; gap: 2px; }
+        .log-item time { min-width: 0; }
+        .pager { flex-wrap: wrap; }
     }
 </style>
 </head>
