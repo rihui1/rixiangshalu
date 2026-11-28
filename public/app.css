@@ -941,11 +941,11 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
     object-fit: cover; object-position: center;
     opacity: 0; transition: opacity 1.4s ease;
 }
-.bg-rotator img.show { opacity: 0.12; }
-html[data-theme="dark"] .bg-rotator img.show { opacity: 0.1; }
+.bg-rotator img.show { opacity: 0.24; }
+html[data-theme="dark"] .bg-rotator img.show { opacity: 0.2; }
 @media (max-width: 640px) {
-    .bg-rotator img.show { opacity: 0.1; }
-    html[data-theme="dark"] .bg-rotator img.show { opacity: 0.08; }
+    .bg-rotator img.show { opacity: 0.2; }
+    html[data-theme="dark"] .bg-rotator img.show { opacity: 0.16; }
 }
 @media (prefers-reduced-motion: reduce) {
     .bg-rotator img { transition: none; }
