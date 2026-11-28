@@ -618,6 +618,8 @@
         '本网站由日向个人搭建，所有功能除了 AI 对话均在浏览器内部运行，不会上传到服务器。服务器已托管到 Cloudflare。': { en: 'Built personally by Rixiang. All features except AI chat run entirely in your browser — nothing is uploaded to the server. Hosting is on Cloudflare.', ja: '日向個人が構築。AI チャットを除く全機能はブラウザ内で完結し、サーバーへはアップロードされません。サーバーは Cloudflare でホスティング。' },
         '另外由于日向本人还是个大学生，学校晚上是会熄灯断电的，所以网站的开启时间比较随缘啦～': { en: 'Also, I\'m still a college student and dorms cut power at night, so the site\'s uptime is... well, a bit random ~', ja: 'ちなみに日向はまだ大学生で、寮が夜に消灯・停電するので、サイトの稼働時間は……まあ、運ですね～' },
         'B 站主页': { en: 'Bilibili', ja: 'Bilibili ホーム' },
+        '部分插画由 @保登绀兰 提供': { en: 'Some illustrations by @保登绀兰', ja: '一部のイラストは @保登绀兰 より提供' },
+        '还请多多支持 · space.bilibili.com/3546895364393184': { en: 'Please support the artist · space.bilibili.com/3546895364393184', ja: '応援よろしくお願いします · space.bilibili.com/3546895364393184' },
         '切换侧栏': { en: 'Toggle sidebar', ja: 'サイドバー切替' },
         '切换深浅色': { en: 'Toggle dark mode', ja: 'ダークモード切替' },
         '选择界面语言': { en: 'Choose language', ja: '言語を選択' },

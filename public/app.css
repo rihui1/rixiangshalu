@@ -181,7 +181,7 @@ button { cursor: pointer; }
 .about-icon { width: 72px; height: 72px; border-radius: 18px; object-fit: cover; box-shadow: 0 2px 10px rgba(0,0,0,.08); flex-shrink: 0; }
 .about-title h2 { margin: 0; font-size: 24px; }
 .about-sub { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
-.about-links { margin-bottom: 16px; }
+.about-links { margin-bottom: 16px; display: grid; gap: 10px; }
 .about-link-card {
     display: flex; align-items: center; gap: 14px;
     padding: 14px 18px; border: 1px solid var(--line); border-radius: 16px;
@@ -929,5 +929,25 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
     .sidebar { padding-bottom: env(safe-area-inset-bottom); }
     .chat-bar { padding-bottom: max(10px, env(safe-area-inset-bottom)); }
     .site-foot { padding-bottom: max(14px, env(safe-area-inset-bottom)); }
+}
+
+/* ---------- 插画背景轮换：低透明度，不抢内容 ---------- */
+.bg-rotator {
+    position: fixed; inset: 0; z-index: -1;
+    pointer-events: none; overflow: hidden;
+}
+.bg-rotator img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; object-position: center;
+    opacity: 0; transition: opacity 1.4s ease;
+}
+.bg-rotator img.show { opacity: 0.12; }
+html[data-theme="dark"] .bg-rotator img.show { opacity: 0.1; }
+@media (max-width: 640px) {
+    .bg-rotator img.show { opacity: 0.1; }
+    html[data-theme="dark"] .bg-rotator img.show { opacity: 0.08; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .bg-rotator img { transition: none; }
 }
 
